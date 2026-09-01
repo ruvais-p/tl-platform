@@ -168,6 +168,16 @@ Each body is `{"ids":["<first-uuid>","<second-uuid>"]}` and must contain every c
 
 ## 4. Add content and media
 
+Administrators, Academic Managers, and Content Managers can upload concept videos. Teachers and Students can view assigned media but cannot upload or change it. In the management portal, open **Media library → New Media Asset**, choose an MP4, WebM, or Ogg file (up to 500 MB), and save it. Tella fills in its file name, MIME type, size, storage path, and ready status automatically. Then create the Video record and select that uploaded asset.
+
+For API clients, send the file as multipart form data:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/media-assets/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "upload=@equations.mp4"
+```
+
 Create a `MediaAsset` first when content references a file:
 
 `POST /api/v1/media-assets/`

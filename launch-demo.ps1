@@ -1,4 +1,4 @@
-# Launch the local Tella / Moodle modelling demo (native Windows, not Docker).
+# Launch the local Tella / Moodle Skill Enhancement demo (native Windows, not Docker).
 $ErrorActionPreference = "Stop"
 
 $Root = $PSScriptRoot
@@ -42,8 +42,8 @@ function Wait-Port([int]$Port, [string]$Name, [int]$Seconds = 30) {
 }
 
 Write-Host ""
-Write-Host "Tella modelling demo"
-Write-Host "===================="
+Write-Host "Tella Skill Enhancement demo"
+Write-Host "============================="
 Write-Host "Project: $Root"
 Write-Host ""
 
@@ -84,7 +84,7 @@ if (Test-Port 8080) {
     Write-Host "Moodle already listening on :8080"
 } else {
     Write-Host "Starting Moodle on :8080 ..."
-    Start-Process -FilePath $Php -ArgumentList @("-S", "localhost:8080", "router.php") -WorkingDirectory (Join-Path $Root "moodle") -WindowStyle Normal
+    Start-Process -FilePath $Php -ArgumentList @("-S", "0.0.0.0:8080", "router.php") -WorkingDirectory (Join-Path $Root "moodle") -WindowStyle Normal
 }
 
 Write-Host "Waiting for services..."
@@ -97,7 +97,7 @@ Start-Process $DemoUrl
 
 Write-Host ""
 Write-Host "Moodle:     $MoodleUrl"
-Write-Host "Modelling:  $DemoUrl"
+Write-Host "Skill Enhancement: $DemoUrl"
 Write-Host "Django:     $DjangoUrl/admin/"
 Write-Host ""
 Write-Host "Logins"

@@ -6,6 +6,21 @@ if ($uri !== '/' && is_file($full)) {
     return false;
 }
 
+// The PHP built-in server delegates directory URLs to its router. Resolve these
+// to the directory's index.php so Moodle links such as /my/ work normally.
+if ($uri !== '/' && substr($uri, -1) === '/') {
+    $scriptname = rtrim($uri, '/') . '/index.php';
+    $script = __DIR__ . $scriptname;
+    if (is_file($script)) {
+        $_SERVER['SCRIPT_FILENAME'] = $script;
+        $_SERVER['SCRIPT_NAME'] = $scriptname;
+        $_SERVER['PHP_SELF'] = $scriptname;
+        chdir(dirname($script));
+        require $script;
+        return true;
+    }
+}
+
 if (preg_match('#^((?:/[^/]+)*/[^/]+\.php)(/.*)?$#', $uri, $matches)) {
     $script = __DIR__ . $matches[1];
     if (is_file($script)) {

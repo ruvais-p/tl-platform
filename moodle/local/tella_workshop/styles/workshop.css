@@ -1,370 +1,80 @@
-.tella-workshop {
-  --tella-primary: #2563eb;
-  --tella-primary-strong: #1d4ed8;
-  --tella-success: #16a34a;
-  --tella-warning: #c2410c;
-  --tella-surface: #ffffff;
-  --tella-background: #f8fafc;
-  --tella-text: #0f172a;
-  --tella-muted: #64748b;
-  --tella-border: #e2e8f0;
-  --tella-radius: 12px;
-  --tella-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
-  --tella-focus: 0 0 0 3px rgb(15 108 191 / 0.25);
-  display: block;
-  box-sizing: border-box;
-  padding: clamp(16px, 3vw, 32px);
-  color: var(--tella-text);
-  background: var(--tella-background);
-  border-radius: var(--tella-radius);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+.tella-workshop-page #page.drawers .main-inner { max-width: 1500px; }
+.tella-plugin {
+  --tella-primary: var(--primary, #0f6cbf); --tella-primary-strong: #095a9f; --tella-primary-soft: #eaf3fb;
+  --tella-accent: #6750a4; --tella-accent-soft: #f1edfb; --tella-success: #198754; --tella-success-soft: #eaf6ef;
+  --tella-warning: #9a6700; --tella-warning-soft: #fff6df; --tella-danger: #b42318; --tella-danger-soft: #fdeeee;
+  --tella-text: var(--body-color, #1f2937); --tella-secondary: #5f6b7a; --tella-muted: #7c8797; --tella-border: #e2e6ea;
+  --tella-border-strong: #d2d8de; --tella-surface: #fff; --tella-subtle: #f7f8fa; --tella-radius-sm: 6px; --tella-radius-md: 8px; --tella-radius-lg: 12px;
+  color: var(--tella-text); font-family: inherit, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5;
 }
-
-.tella-workshop *,
-.tella-workshop *::before,
-.tella-workshop *::after {
-  box-sizing: border-box;
-}
-
-.tella-workshop button,
-.tella-workshop input,
-.tella-workshop select,
-.tella-workshop textarea {
-  font: inherit;
-  color: inherit;
-  background: var(--tella-surface);
-  border: 1px solid var(--tella-border);
-  border-radius: 10px;
-  appearance: none;
-  -webkit-appearance: none;
-  box-shadow: none;
-  line-height: 1.3;
-}
-
-.tella-boot {
-  margin: 24px;
-  color: var(--tella-muted);
-}
-
-.tella-workshop a:not(.nav-link) {
-  color: var(--tella-primary);
-  text-decoration: none;
-}
-
-.tella-modelling {
-  min-width: 0;
-}
-
-.tella-pagehead {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.tella-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.tella-workshop .nav-tabs .nav-link {
-  cursor: pointer;
-}
-
-.tella-tab:focus-visible,
-.tella-workshop button:focus-visible,
-.tella-workshop input:focus-visible,
-.tella-workshop a:focus-visible {
-  outline: none;
-  box-shadow: var(--tella-focus);
-}
-
-.tella-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.tella-toolbar h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  letter-spacing: -0.03em;
-}
-
-.tella-toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tella-workshop button.tella-btn {
-  min-height: 44px;
-  padding: 0 14px;
-  cursor: pointer;
-  background: var(--tella-surface);
-}
-
-.tella-workshop button.tella-btn-primary {
-  background: var(--tella-primary);
-  color: #fff;
-  border-color: var(--tella-primary);
-}
-
-.tella-workshop button.tella-btn-primary:hover,
-.tella-workshop button.tella-btn.is-on:hover {
-  background: var(--tella-primary-strong);
-}
-
-.tella-question {
-  margin: 0;
-  flex: 1;
-  padding: 10px 14px;
-  background: #eef5fb;
-  color: inherit;
-  border-radius: var(--tella-radius);
-  line-height: 1.45;
-}
-
-.tella-editor {
-  display: grid;
-  gap: 16px;
-}
-
-.tella-card h3 {
-  margin: 0 0 12px;
-  font-size: 0.95rem;
-  letter-spacing: -0.02em;
-}
-
-.tella-identity-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.tella-workshop textarea {
-  min-height: 64px;
-  padding: 8px 10px;
-  resize: vertical;
-  width: 100%;
-}
-
-.tella-split {
-  display: grid;
-  grid-template-columns: minmax(280px, 340px) 1fr;
-  gap: 16px;
-}
-
-.tella-split-even {
-  grid-template-columns: 1fr 1fr;
-}
-
-.tella-card {
-  background: var(--tella-surface);
-  border-radius: var(--tella-radius);
-  box-shadow: var(--tella-shadow);
-  padding: 16px;
-}
-
-.tella-inputs {
-  display: grid;
-  gap: 10px;
-}
-
-.tella-field {
-  display: grid;
-  gap: 4px;
-  font-size: 0.9rem;
-  color: var(--tella-muted);
-}
-
-.tella-field input {
-  min-height: 44px;
-  padding: 8px 10px;
-  color: var(--tella-text);
-}
-
-.tella-error {
-  color: var(--tella-warning);
-  min-height: 1.1em;
-  font-size: 0.8rem;
-}
-
-.tella-canvas {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 8px;
-  background: var(--tella-background);
-}
-
-.tella-here,
-.tella-note,
-.tella-muted {
-  color: var(--tella-muted);
-  margin: 8px 0 0;
-}
-
-.tella-slope {
-  margin: 16px 0 0;
-  padding: 16px 18px;
-  border-radius: var(--tella-radius);
-  background: #ecfdf3;
-  color: var(--tella-success);
-  font-size: 1.35rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-}
-
-.tella-slope.is-negative {
-  background: #fff7ed;
-  color: var(--tella-warning);
-}
-
-.tella-slider {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.tella-slider input[type="range"] {
-  width: 100%;
-  min-height: 44px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
-
-.tella-slider input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  background: var(--tella-border);
-  border-radius: 999px;
-}
-
-.tella-slider input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -8px;
-  border-radius: 50%;
-  background: var(--tella-primary);
-  border: 0;
-}
-
-.tella-sliders {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.tella-report {
-  display: grid;
-  gap: 16px;
-}
-
-.tella-recommend {
-  font-size: 1.35rem;
-  line-height: 1.45;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.tella-facts {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-}
-
-.tella-facts dt {
-  color: var(--tella-muted);
-  font-size: 0.85rem;
-}
-
-.tella-facts dd {
-  margin: 4px 0 0;
-  font-weight: 600;
-}
-
-.tella-working {
-  background: var(--tella-surface);
-  border-radius: var(--tella-radius);
-  padding: 12px 16px;
-  box-shadow: var(--tella-shadow);
-}
-
-.tella-working summary {
-  cursor: pointer;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-}
-
-.tella-toast {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  background: var(--tella-text);
-  color: #fff;
-  padding: 12px 16px;
-  border-radius: 10px;
-  opacity: 0;
-  transform: translateY(8px);
-  pointer-events: none;
-  transition: 180ms ease;
-}
-
-.tella-toast.is-on {
-  opacity: 1;
-  transform: none;
-}
-
-.tella-job h3 {
-  margin: 0 0 6px;
-}
-
-@media (max-width: 960px) {
-  .tella-split,
-  .tella-split-even,
-  .tella-sliders,
-  .tella-identity-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tella-meta {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
-
-@media (max-width: 640px) {
-  .tella-app {
-    padding: 12px;
-  }
-
-  .tella-inputs {
-    max-height: none;
-  }
-}
-
-@media print {
-  .tella-workshop {
-    background: #fff;
-    color: #111;
-  }
-
-  .tella-tabs,
-  .tella-toolbar-actions,
-  .tella-topbar a,
-  .tella-toast {
-    display: none !important;
-  }
-}
+.tella-plugin *, .tella-plugin *::before, .tella-plugin *::after { box-sizing: border-box; }
+.tella-plugin button, .tella-plugin input { font: inherit; }
+.tella-plugin button:focus-visible, .tella-plugin input:focus-visible { outline: 3px solid color-mix(in srgb, var(--tella-primary) 25%, transparent); outline-offset: 2px; }
+.tella-boot { padding: 24px; color: var(--tella-secondary); }
+.tella-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tella-page { max-width: 1180px; margin: 0 auto; padding: 8px 4px 40px; }
+.tella-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 12px 0 24px; border-bottom: 1px solid var(--tella-border); margin-bottom: 24px; }
+.tella-page-header h1 { margin: 0 0 5px; font-size: clamp(1.75rem, 3vw, 2rem); font-weight: 600; letter-spacing: -.025em; }
+.tella-page-header p, .tella-section-head p { color: var(--tella-secondary); margin: 0; }
+.tella-section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin: 0 0 12px; }
+.tella-section-head h2, .tella-concepts h2 { font-size: 1.25rem; font-weight: 600; margin: 0 0 2px; }
+.tella-stats { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.tella-stats span { padding: 5px 9px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-sm); color: var(--tella-secondary); font-size: .78rem; white-space: nowrap; background: var(--tella-surface); }
+.tella-stats b { color: var(--tella-accent); }
+.tella-btn { min-height: 42px; padding: 8px 13px; border-radius: var(--tella-radius-sm); border: 1px solid var(--tella-border-strong); background: var(--tella-surface); color: var(--tella-primary); font-weight: 600; font-size: .875rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.tella-btn .tella-icon { width: 17px; }.tella-btn:hover { border-color: var(--tella-primary); background: var(--tella-primary-soft); }
+.tella-btn--primary { background: var(--tella-primary); color: #fff; border-color: var(--tella-primary); }.tella-btn--primary:hover { background: var(--tella-primary-strong); color: #fff; }
+.tella-continue { display: grid; grid-template-columns: auto minmax(220px, 1fr) minmax(180px, 280px) auto; gap: 16px; align-items: center; border: 1px solid color-mix(in srgb, var(--tella-primary) 35%, var(--tella-border)); border-left: 4px solid var(--tella-primary); background: var(--tella-surface); border-radius: var(--tella-radius-md); padding: 16px; margin-bottom: 28px; }
+.tella-continue-icon { width: 46px; height: 46px; border-radius: var(--tella-radius-md); display: grid; place-items: center; color: var(--tella-primary); background: var(--tella-primary-soft); }
+.tella-continue-main h3 { font-size: 1.05rem; margin: 5px 0 0; }.tella-continue-main p { margin: 0; color: var(--tella-secondary); font-size: .875rem; }
+.tella-continue-progress > span { display: block; font-size: .78rem; color: var(--tella-secondary); margin-bottom: 5px; }
+.tella-progress { height: 7px; overflow: hidden; border-radius: 10px; background: #e9edf1; }.tella-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--tella-primary); transition: width 180ms ease; }
+.tella-badge { font-size: .68rem; font-weight: 650; letter-spacing: .055em; display: inline-block; padding: 2px 6px; border-radius: 4px; color: #31546c; background: #edf4f8; }
+.tella-badge--experiment { color: var(--tella-accent); background: var(--tella-accent-soft); }.tella-badge--workshop { color: var(--tella-primary); background: var(--tella-primary-soft); }.tella-badge--challenge { color: var(--tella-warning); background: var(--tella-warning-soft); }
+.tella-lab-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
+.tella-lab-card { display: grid; grid-template-columns: 128px 1fr; min-height: 190px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); background: var(--tella-surface); overflow: hidden; }
+.tella-lab-motif { position: relative; display: grid; place-items: center; background: #f3f7fa; color: var(--tella-primary); overflow: hidden; }.tella-lab-motif--calculus { color: var(--tella-accent); background: #f6f3fa; }
+.tella-lab-motif .tella-icon { width: 42px; height: 42px; z-index: 1; }.tella-lab-motif i { position: absolute; width: 160px; height: 46px; border: 1px solid currentColor; border-radius: 50%; opacity: .15; transform: rotate(-20deg); }.tella-lab-motif i:nth-of-type(2) { width: 125px; height: 70px; }.tella-lab-motif i:nth-of-type(3) { width: 90px; height: 95px; }
+.tella-lab-body { padding: 16px; display: flex; flex-direction: column; align-items: flex-start; }.tella-lab-body h3 { font-size: 1.1rem; margin: 0 0 5px; }.tella-lab-body p { margin: 0 0 8px; color: var(--tella-secondary); font-size: .875rem; }.tella-lab-body small { color: var(--tella-muted); margin: auto 0 10px; }
+.tella-recent { border-top: 1px solid var(--tella-border); padding-top: 20px; }.tella-recent-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); }
+.tella-status-icon { width: 32px; height: 32px; display: grid; place-items: center; background: var(--tella-success-soft); color: var(--tella-success); border-radius: 50%; }.tella-recent-row div { flex: 1; }.tella-recent-row b, .tella-recent-row small { display: block; }.tella-recent-row small { color: var(--tella-secondary); }.tella-xp { color: var(--tella-accent); font-weight: 600; }
+.tella-back { min-height: 40px; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 4px 2px; color: var(--tella-primary); background: transparent; font-weight: 600; cursor: pointer; }.tella-back .tella-icon { width: 18px; }
+.tella-mastery { width: 230px; padding: 10px 12px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); }.tella-mastery > div { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: .8rem; color: var(--tella-secondary); }.tella-mastery b { color: var(--tella-accent); }.tella-mastery .tella-progress span { background: var(--tella-accent); }
+.tella-journey { border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); background: var(--tella-surface); overflow: hidden; }
+.tella-journey-card { display: grid; grid-template-columns: 38px 44px minmax(0, 1fr) auto; gap: 13px; min-height: 112px; align-items: center; padding: 13px 16px 13px 10px; border-bottom: 1px solid var(--tella-border); }.tella-journey-card:last-child { border: 0; }.tella-journey-card.is-current { background: color-mix(in srgb, var(--tella-primary-soft) 45%, white); box-shadow: inset 3px 0 var(--tella-primary); }
+.tella-journey-step { align-self: stretch; display: flex; flex-direction: column; align-items: center; }.tella-journey-step span { width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--tella-border-strong); color: var(--tella-secondary); border-radius: 50%; font-size: .75rem; background: #fff; }.tella-journey-step i { width: 1px; flex: 1; background: var(--tella-border); margin-bottom: -28px; }.tella-journey-card:last-child i { display: none; }
+.tella-activity-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--tella-radius-md); color: var(--tella-accent); background: var(--tella-accent-soft); }.tella-activity-copy h3 { display: inline; font-size: 1rem; margin: 0 0 3px; }.tella-phase { display: block; color: var(--tella-secondary); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }.tella-activity-copy .tella-badge { margin: 0 7px 3px 0; }.tella-state { margin: 2px 0 0; color: var(--tella-secondary); font-size: .8rem; display: flex; gap: 4px; align-items: center; }.tella-state .tella-icon { width: 14px; }.tella-state--completed { color: var(--tella-success); }
+.tella-concepts { padding: 22px 0 0; }.tella-concepts > div { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; }.tella-concepts span { padding: 5px 9px; border: 1px solid var(--tella-border); border-radius: 20px; font-size: .78rem; color: var(--tella-secondary); background: var(--tella-surface); }
+.tella-workshop-player { max-width: 1480px; margin: 0 auto; padding-bottom: 28px; }.tella-workshop-header { display: flex; justify-content: space-between; align-items: end; border-bottom: 1px solid var(--tella-border); padding: 3px 2px 14px; margin-bottom: 14px; }.tella-workshop-header span { color: var(--tella-secondary); font-size: .78rem; }.tella-workshop-header h1 { font-size: 1.5rem; margin: 1px 0 0; font-weight: 600; }.tella-workshop-header > div:last-child { display: flex; gap: 12px; align-items: center; }.tella-workshop-header b { color: var(--tella-accent); font-size: .82rem; padding: 4px 7px; background: var(--tella-accent-soft); border-radius: 4px; }
+.tella-workshop-grid { display: grid; grid-template-columns: minmax(210px, 23%) minmax(480px, 54%) minmax(210px, 23%); border: 1px solid var(--tella-border); border-radius: var(--tella-radius-lg); background: var(--tella-surface); overflow: hidden; min-height: 680px; }
+.tella-mission, .tella-coach { padding: 20px; background: #fafbfc; }.tella-mission { border-right: 1px solid var(--tella-border); }.tella-coach { border-left: 1px solid var(--tella-border); }
+.tella-eyebrow { color: var(--tella-muted); font-size: .68rem; font-weight: 650; letter-spacing: .08em; }.tella-mission h2 { font-size: 1.15rem; line-height: 1.3; margin: 6px 0 10px; }.tella-mission > p { color: var(--tella-secondary); font-size: .86rem; }.tella-objective { border-left: 3px solid var(--tella-primary); background: var(--tella-primary-soft); padding: 9px 11px; margin: 18px 0; }.tella-objective span, .tella-objective b { display: block; }.tella-objective span { font-size: .7rem; color: var(--tella-secondary); }.tella-objective b { font-size: .85rem; }.tella-mission h3 { font-size: .78rem; margin: 20px 0 5px; }.tella-mission ul { padding-left: 18px; color: var(--tella-secondary); font-size: .84rem; }.tella-video-link { display: flex; align-items: center; gap: 9px; text-align: left; border: 1px solid var(--tella-border); background: #fff; padding: 9px; border-radius: var(--tella-radius-sm); width: 100%; color: var(--tella-primary); cursor: pointer; margin-top: 24px; }.tella-video-link small, .tella-video-link span { display: block; }.tella-video-link small { color: var(--tella-secondary); }
+.tella-experiment { min-width: 0; padding: 20px; }.tella-experiment-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; }.tella-experiment-head h2 { margin: 2px 0 0; font-size: 1.2rem; }.tella-segment { display: flex; padding: 2px; border: 1px solid var(--tella-border-strong); border-radius: var(--tella-radius-sm); background: var(--tella-subtle); }.tella-segment button { min-height: 34px; border: 0; border-radius: 4px; padding: 4px 9px; background: transparent; color: var(--tella-secondary); font-size: .75rem; cursor: pointer; }.tella-segment button.is-active { color: var(--tella-primary); background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .08); font-weight: 600; }
+.tella-control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); }.tella-control-grid label { font-size: .78rem; color: var(--tella-secondary); }.tella-control-grid output { float: right; color: var(--tella-text); font-weight: 650; }.tella-control-grid input { display: block; width: 100%; min-height: 32px; margin-top: 4px; accent-color: var(--tella-primary); cursor: pointer; }
+.tella-calc-rounds { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }.tella-calc-rounds button { min-height: 38px; border: 1px solid var(--tella-border); border-radius: 5px; background: var(--tella-surface); color: var(--tella-secondary); font-size: .68rem; cursor: pointer; }.tella-calc-rounds button span { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 3px; border-radius: 50%; background: var(--tella-subtle); }.tella-calc-rounds button.is-active { border-color: var(--tella-primary); color: var(--tella-primary); background: var(--tella-primary-soft); font-weight: 650; }.tella-calc-mission { min-height: 42px; margin: 0 0 9px; padding: 7px 9px; border-left: 3px solid var(--tella-accent); background: var(--tella-accent-soft); color: var(--tella-secondary); font-size: .72rem; }.tella-tv-kpis { grid-template-columns: repeat(4, 1fr); }.tella-tv-kpis b { font-size: .86rem; }.tella-calc-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border: 1px solid var(--tella-border); border-bottom: 0; border-radius: var(--tella-radius-md) var(--tella-radius-md) 0 0; color: var(--tella-secondary); font-size: .72rem; }.tella-calc-toolbar button { min-height: 32px; padding: 3px 8px; border: 1px solid var(--tella-border-strong); border-radius: 5px; background: #fff; color: var(--tella-primary); cursor: pointer; }.tella-tv-canvas { border-radius: 0; }.tella-tv-canvas canvas { display: block; width: 100%; height: auto; }.tella-tv-model { min-height: 340px; }
+.tella-freeze { display: flex; gap: 4px; }.tella-freeze button.is-active { border-color: var(--tella-primary); background: var(--tella-primary-soft); font-weight: 650; }.tella-result, .tella-own-question { min-height: 280px; padding: 22px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); background: linear-gradient(145deg, #fff, var(--tella-primary-soft)); }.tella-result h3, .tella-own-question h3 { margin: 7px 0 18px; font-size: 1.05rem; }.tella-result > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; }.tella-result > div p { margin: 0; padding: 14px; border: 1px solid var(--tella-border); border-radius: 7px; background: #fff; }.tella-result p span, .tella-result p small { display: block; color: var(--tella-secondary); }.tella-result p b { display: block; margin: 5px 0; }.tella-result-gain { margin-top: 16px; color: var(--tella-success); }.tella-own-question > p { color: var(--tella-secondary); }.tella-own-question > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 15px 0 20px; }.tella-own-question > div span { padding: 10px 7px; border: 1px solid var(--tella-border); border-radius: 6px; background: #fff; color: var(--tella-secondary); font-size: .68rem; }.tella-own-question > div b { display: block; margin-bottom: 4px; color: var(--tella-text); font-size: .8rem; }
+.tella-question-fields label { display: grid; gap: 4px; color: var(--tella-secondary); font-size: .67rem; }.tella-question-fields input { width: 100%; min-height: 36px; padding: 5px 7px; border: 1px solid var(--tella-border-strong); border-radius: 5px; background: #fff; color: var(--tella-text); font: inherit; font-size: .78rem; }.tella-question-fields input:focus { border-color: var(--tella-primary); outline: 2px solid var(--tella-primary-soft); }
+.tella-calc-toolbar > span > small { display: block; margin-top: 2px; color: var(--tella-muted); font-size: .65rem; }.tella-chart-key { display: flex; flex-wrap: wrap; gap: 7px 14px; padding: 7px 9px; border: 1px solid var(--tella-border); border-top: 0; border-radius: 0 0 var(--tella-radius-md) var(--tella-radius-md); background: #fff; color: var(--tella-secondary); font-size: .66rem; }.tella-chart-key span { display: inline-flex; align-items: center; gap: 5px; }.tella-chart-key i { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; }.tella-chart-key .is-current { background: #f59e0b; border: 1px solid #0f172a; }.tella-chart-key .is-best { background: #2563eb; }.tella-chart-key .is-gradient { width: 17px; height: 3px; border-radius: 0; background: #16a34a; }.tella-chart-key .is-profit { border-radius: 2px; background: linear-gradient(135deg, #bfdbfe, #1d4ed8); }.tella-chart-key .is-break-even { width: 17px; height: 0; border-top: 2px dashed #334155; border-radius: 0; background: transparent; }.tella-chart-key .is-curve { width: 17px; height: 3px; border-radius: 0; background: #2563eb; }.tella-chart-key + .tella-feedback { margin-top: 10px; }.tella-equation-key { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 14px; }.tella-equation-key span { padding: 8px; border: 1px solid var(--tella-border); border-radius: 5px; background: #fff; color: var(--tella-secondary); font-family: inherit; font-size: .68rem; }.tella-equation-key b { display: block; color: var(--tella-text); font-family: Georgia, serif; font-size: .78rem; }
+.tella-view-actions { display: flex; gap: 6px; }.tella-tv-canvas { position: relative; overflow: hidden; }.tella-tv-canvas.is-interactive canvas { cursor: grab; touch-action: none; }.tella-tv-canvas.is-interactive canvas.is-dragging { cursor: grabbing; }.tella-tv-canvas.is-interactive canvas:focus-visible { outline: 3px solid var(--tella-primary); outline-offset: -3px; }.tella-drag-cue { position: absolute; right: 12px; bottom: 10px; padding: 4px 8px; border-radius: 20px; background: rgba(15,23,42,.76); color: #fff; font-size: .62rem; pointer-events: none; }.tella-chart-key .is-best { background: #fff; border: 2px solid #111827; }.tella-chart-key .is-slope-s, .tella-chart-key .is-slope-t { width: 17px; height: 3px; border-radius: 0; background: #f97316; }.tella-chart-key .is-slope-t { background: #06b6d4; }.tella-chart-key .is-profit { width: 78px; border-radius: 3px; background: linear-gradient(90deg, #372069, #2a788e, #22a884, #7ad151, #fde725); }.tella-chart-key .tella-heat-key { gap: 4px; }.tella-chart-key .tella-heat-key small { color: var(--tella-muted); font-size: .58rem; }.tella-chart-key .tella-heat-key b { font-weight: 600; }
+.tella-workshop-progress { margin: 4px 0 10px; }.tella-workshop-progress > span { display: block; margin-bottom: 5px; color: var(--tella-secondary); font-size: .7rem; }.tella-workshop-progress > span b { color: var(--tella-primary); }.tella-calc-rounds button.is-complete { border-color: var(--tella-success); color: var(--tella-success); background: #f0fdf4; }.tella-calc-rounds button:disabled { cursor: not-allowed; opacity: .48; }.tella-round-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding: 12px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); background: var(--tella-surface); }.tella-round-footer b, .tella-round-footer span { display: block; }.tella-round-footer b { color: var(--tella-text); font-size: .75rem; }.tella-round-footer span { margin-top: 2px; color: var(--tella-secondary); font-size: .68rem; }.tella-round-footer button:disabled { cursor: not-allowed; opacity: .5; }
+.tella-calc-rounds { grid-template-columns: repeat(4, 1fr); }
+.tella-lp-visual { padding: 12px; }.tella-lp-visual svg { height: 520px; }.tella-lp-grid line { stroke: #e8ebef; stroke-width: 1; }.tella-lp-grid text { fill: #64748b; font-size: 10px; }.tella-lp-x-tick { text-anchor: middle; }.tella-lp-y-tick { text-anchor: end; }.tella-lp-limit { fill: none; stroke-width: 2.2; }.tella-lp-limit--labour { stroke: #8b5cf6; }.tella-lp-limit--battery { stroke: #f97316; }.tella-lp-limit--carbon { stroke: #64748b; stroke-dasharray: 5 4; }.tella-axis-label { fill: #475569; font-size: 10px; font-weight: 650; }.tella-lp-line-labels text { font-size: 10px; font-weight: 650; }.tella-lp-line-labels text:nth-child(1) { fill: #7c3aed; }.tella-lp-line-labels text:nth-child(2) { fill: #c2410c; }.tella-lp-line-labels text:nth-child(3) { fill: #475569; }.tella-lp-key { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 2px 3px 0; color: var(--tella-secondary); font-size: .65rem; }.tella-lp-key span { display: inline-flex; align-items: center; gap: 4px; }.tella-lp-key i { width: 15px; height: 3px; background: #8b5cf6; }.tella-lp-key .is-battery { background: #f97316; }.tella-lp-key .is-carbon { background: repeating-linear-gradient(90deg, #64748b 0 5px, transparent 5px 8px); }
+.tella-lp-limit { cursor: help; pointer-events: stroke; }.tella-lp-limit:hover { stroke-width: 5; }
+.tella-lp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 0 14px; }.tella-lp-steps span, .tella-lp-steps button { display: flex; align-items: center; gap: 6px; color: var(--tella-secondary); font-size: .68rem; font-weight: 650; }.tella-lp-steps button { padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }.tella-lp-steps b { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--tella-border); border-radius: 50%; font-size: .7rem; }.tella-lp-steps .is-active { color: var(--tella-primary); }.tella-lp-steps .is-active b { border-color: var(--tella-primary); background: var(--tella-primary); color: #fff; }.tella-lp-steps .is-complete { color: var(--tella-success); }.tella-lp-steps .is-complete b { border-color: var(--tella-success); background: var(--tella-success); color: #fff; }.tella-lp-task { padding: 14px; margin-bottom: 12px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); background: #fbfcfd; }.tella-lp-task > b { display: block; margin-bottom: 4px; }.tella-lp-task p { margin: 0 0 10px; color: var(--tella-secondary); font-size: .82rem; }.tella-lp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }.tella-lp-actions button { padding: 7px 9px; border: 1px solid var(--tella-border); border-radius: 7px; background: #fff; color: var(--tella-text); font-size: .74rem; cursor: pointer; }.tella-lp-actions button:disabled { color: var(--tella-success); background: #f0fdf4; cursor: default; }.tella-lp-hint { padding: 8px 10px; border-radius: 7px; background: #fff7ed; color: #9a3412 !important; }.tella-lp-hint.is-good { background: #ecfdf5; color: #047857 !important; }.tella-region-click-area { fill: transparent; cursor: crosshair; }
+.tella-lp-plot-status { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 10px; padding: 8px 10px; border-radius: 7px; background: #eff6ff; color: #1d4ed8; font-size: .76rem; }.tella-lp-draft-point { fill: #2563eb; stroke: #fff; stroke-width: 2; pointer-events: none; }
+/* Workshop: task-first layout, with quiet supporting context. */
+.tella-workshop-grid { grid-template-columns: 248px minmax(0, 1fr); min-height: 0; border-radius: 6px; }.tella-mission { padding: 24px 20px; background: #fff; }.tella-mission > p { font-size: .84rem; line-height: 1.55; }.tella-objective { margin: 16px 0; padding: 8px 10px; background: transparent; }.tella-mission h3 { margin-top: 18px; }.tella-video-link { margin-top: 18px; border: 0; border-top: 1px solid var(--tella-border); border-radius: 0; padding: 12px 0 0; }.tella-experiment { padding: 26px 30px 30px; }.tella-experiment-head { margin-bottom: 20px; }.tella-lp-task { border-radius: 4px; box-shadow: none; background: #fff; }.tella-lp-steps { border-bottom: 1px solid var(--tella-border); padding-bottom: 12px; gap: 14px; }.tella-lp-steps span, .tella-lp-steps button { font-size: .72rem; }.tella-coach { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(190px, 1fr) minmax(420px, 2fr); align-items: center; gap: 18px; padding: 14px 20px; border-left: 0; border-top: 1px solid var(--tella-border); background: #fff; }.tella-coach > p { margin: 0; font-size: .78rem; }.tella-coach-actions { grid-template-columns: repeat(4, 1fr); gap: 6px; }.tella-coach-actions button { min-height: 34px; padding: 6px 8px; border-radius: 4px; }.tella-coach-message { grid-column: 2 / -1; margin: 0; }
+.tella-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }.tella-kpis > div { border: 1px solid var(--tella-border); border-radius: var(--tella-radius-sm); padding: 8px 10px; }.tella-kpis span, .tella-kpis b { display: block; }.tella-kpis span { color: var(--tella-secondary); font-size: .68rem; }.tella-kpis b { font-size: 1rem; }.tella-success { color: var(--tella-success); }.tella-danger { color: var(--tella-danger); }
+.tella-lp-visual, .tella-contour { border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); padding: 7px; }.tella-lp-visual svg, .tella-contour svg { width: 100%; display: block; }.tella-contour svg { height: 250px; }.tella-feasible { fill: #dcefe5; stroke: var(--tella-success); stroke-width: 1.5; }.tella-limit { fill: none; stroke: #7494ad; stroke-width: 1.2; }.tella-axis { fill: none; stroke: #687582; stroke-width: 1.5; }.tella-selected { fill: var(--tella-primary); stroke: #fff; stroke-width: 3; }.tella-selected.is-infeasible { fill: var(--tella-danger); }.tella-lp-visual text, .tella-contour text { font-size: 10px; fill: var(--tella-secondary); }.tella-lp-visual .tella-region-label { fill: var(--tella-success); font-weight: 650; font-size: 9px; }.tella-contour path:not(.tella-axis) { fill: none; stroke: var(--tella-accent); stroke-width: 2; opacity: .65; }.tella-contour circle { fill: var(--tella-primary); stroke: white; stroke-width: 3; }
+.tella-gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }.tella-gauge { border: 1px solid var(--tella-border); padding: 7px 8px; border-radius: var(--tella-radius-sm); }.tella-gauge > div { display: flex; justify-content: space-between; gap: 4px; font-size: .69rem; }.tella-gauge small { font-size: .62rem; color: var(--tella-secondary); }.tella-gauge--warning { border-color: #e2b94f; }.tella-gauge--warning .tella-progress span { background: var(--tella-warning); }.tella-gauge--danger { border-color: #e99c96; }.tella-gauge--danger .tella-progress span { background: var(--tella-danger); }.tella-gauge--warning small { color: var(--tella-warning); }.tella-gauge--danger small { color: var(--tella-danger); }
+.tella-feedback { display: flex; gap: 9px; padding: 9px 10px; border-radius: var(--tella-radius-sm); margin-top: 10px; font-size: .75rem; }.tella-feedback .tella-icon { flex: 0 0 auto; width: 18px; }.tella-feedback b, .tella-feedback span { display: block; }.tella-feedback--warning { background: var(--tella-warning-soft); color: var(--tella-warning); }.tella-feedback--danger { background: var(--tella-danger-soft); color: var(--tella-danger); }.tella-feedback--info { background: var(--tella-primary-soft); color: #275f86; }
+.tella-feedback--success { background: var(--tella-success-soft); color: var(--tella-success); }.tella-feedback--success em { margin-left: 6px; font-style: normal; color: var(--tella-accent); }.tella-feedback-actions { display: flex !important; gap: 6px; margin-top: 7px; }.tella-feedback-actions button { min-height: 34px; border: 1px solid currentColor; border-radius: 5px; background: #fff; color: var(--tella-success); cursor: pointer; padding: 4px 8px; }
+.tella-scenario-card { display: flex; gap: 8px; padding: 9px 10px; margin: 10px 0; border: 1px solid #e2b94f; border-radius: var(--tella-radius-sm); background: var(--tella-warning-soft); color: var(--tella-warning); font-size: .72rem; }.tella-scenario-card .tella-icon { flex: 0 0 auto; width: 18px; }.tella-scenario-card p { color: var(--tella-secondary); margin: 2px 0 0; }
+.tella-math-model { min-height: 270px; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); padding: 18px; background: #fbfbfd; }.tella-math-model h3 { font-size: .92rem; margin: 8px 0 14px; }.tella-math-model em { display: block; font-family: Georgia, serif; font-size: 1.3rem; color: var(--tella-accent); margin-top: 5px; }.tella-math-model p { margin: 7px 0; font-family: Georgia, serif; }.tella-math-model small { color: var(--tella-secondary); margin-left: 10px; font-family: inherit; }
+.tella-coach-head { display: flex; align-items: center; gap: 8px; }.tella-coach-head > span { width: 36px; height: 36px; border-radius: var(--tella-radius-md); background: var(--tella-accent-soft); color: var(--tella-accent); display: grid; place-items: center; }.tella-coach h2 { font-size: .98rem; margin: 0; }.tella-coach-head small { color: var(--tella-muted); }.tella-coach > p { color: var(--tella-secondary); font-size: .84rem; margin: 16px 0 10px; }.tella-coach-actions { display: grid; gap: 7px; }.tella-coach-actions button { min-height: 40px; text-align: left; padding: 7px 9px; border: 1px solid var(--tella-border); background: #fff; border-radius: var(--tella-radius-sm); color: var(--tella-text); font-size: .76rem; cursor: pointer; }.tella-coach-actions button:hover { border-color: var(--tella-accent); color: var(--tella-accent); }.tella-coach-message { margin-top: 12px; padding: 10px; border-left: 3px solid var(--tella-accent); background: var(--tella-accent-soft); font-size: .75rem; }.tella-coach-message b, .tella-coach-message span { display: block; }.tella-coach-message span { color: var(--tella-secondary); margin-top: 4px; }
+.tella-completion { max-width: 650px; margin: 32px auto; padding: 32px; text-align: center; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-lg); background: var(--tella-surface); }.tella-completion-check { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; background: var(--tella-success-soft); color: var(--tella-success); }.tella-completion h1 { margin: 5px 0; font-size: 1.55rem; }.tella-completion > p { color: var(--tella-secondary); }.tella-completion-xp { display: inline-block; margin: 6px 0 16px; padding: 4px 9px; border-radius: 5px; color: var(--tella-accent); background: var(--tella-accent-soft); font-weight: 650; }.tella-mastery-change { padding: 12px; text-align: left; border: 1px solid var(--tella-border); border-radius: var(--tella-radius-md); }.tella-mastery-change > span { color: var(--tella-secondary); font-size: .78rem; }.tella-mastery-change b { float: right; color: var(--tella-accent); }.tella-mastery-change i { font-style: normal; color: var(--tella-muted); }.tella-mastery-change .tella-progress { clear: both; margin-top: 8px; }.tella-mastery-change .tella-progress span { background: var(--tella-accent); }.tella-completion .tella-concepts { text-align: left; }.tella-completion-actions { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
+.tella-video-dialog { width: min(760px, calc(100vw - 32px)); border: 1px solid #d2d8de; border-radius: 10px; padding: 22px; color: #1f2937; background: #fff; box-shadow: 0 8px 30px rgb(0 0 0 / .16); }.tella-video-dialog::backdrop { background: rgb(17 24 39 / .55); }.tella-video-dialog h2 { margin: 4px 36px 14px 0; font-size: 1.25rem; }.tella-dialog-close { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border: 1px solid #d2d8de; border-radius: 6px; background: #fff; cursor: pointer; font-size: 1.4rem; }.tella-video-stage { min-height: 180px; display: grid; place-items: center; border-radius: 8px; background: #f7f8fa; color: #5f6b7a; text-align: center; }.tella-video-stage video { display: block; width: 100%; max-height: 65vh; border-radius: 8px; background: #111827; }
+@media (max-width: 1199px) { .tella-workshop-grid { grid-template-columns: 210px minmax(450px, 1fr); }.tella-coach { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--tella-border); }.tella-coach-actions { grid-template-columns: repeat(4, 1fr); }.tella-coach-message { max-width: 720px; } }
+@media (max-width: 900px) { .tella-lab-grid { grid-template-columns: 1fr; }.tella-workshop-grid { grid-template-columns: 1fr; }.tella-mission { border-right: 0; border-bottom: 1px solid var(--tella-border); }.tella-coach { grid-column: auto; }.tella-coach-actions { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 680px) { .tella-page-header, .tella-workshop-header { flex-direction: column; }.tella-stats { justify-content: flex-start; }.tella-continue { grid-template-columns: auto 1fr; }.tella-continue-progress, .tella-continue .tella-btn { grid-column: 1 / -1; }.tella-lab-card { grid-template-columns: 82px 1fr; }.tella-journey-card { grid-template-columns: 30px 36px 1fr; padding-right: 10px; }.tella-journey-card .tella-btn { grid-column: 3; justify-self: start; }.tella-activity-icon { width: 36px; height: 36px; }.tella-mastery { width: 100%; }.tella-experiment { padding: 14px; }.tella-experiment-head { align-items: flex-start; flex-direction: column; }.tella-control-grid, .tella-kpis, .tella-gauges { grid-template-columns: 1fr; }.tella-lp-visual svg, .tella-contour svg { height: auto; }.tella-coach-actions { grid-template-columns: 1fr; }.tella-calc-rounds { grid-template-columns: repeat(3, 1fr); }.tella-result > div { grid-template-columns: 1fr; }.tella-result > div > strong { transform: rotate(90deg); text-align: center; }.tella-own-question > div { grid-template-columns: 1fr 1fr; }.tella-equation-key { grid-template-columns: 1fr; }.tella-calc-toolbar { align-items: flex-start; gap: 8px; }.tella-chart-key { gap: 6px 10px; } }
+@media (prefers-reduced-motion: reduce) { .tella-plugin *, .tella-plugin *::before, .tella-plugin *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

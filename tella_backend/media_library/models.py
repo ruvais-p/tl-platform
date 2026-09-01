@@ -1,7 +1,14 @@
 import uuid
+from pathlib import Path
 
 from django.conf import settings
 from django.db import models
+
+
+def media_upload_path(instance, filename):
+    """Keep uploaded media in a predictable, collision-resistant location."""
+    suffix = Path(filename).suffix.lower()
+    return f"tella/{instance.file_type.lower()}/{uuid.uuid4().hex}{suffix}"
 
 
 class MediaAsset(models.Model):
@@ -14,6 +21,7 @@ class MediaAsset(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     file_name = models.CharField(max_length=255)
+    file = models.FileField(upload_to=media_upload_path, blank=True)
     file_type = models.CharField(max_length=50, db_index=True)
     mime_type = models.CharField(max_length=120)
     file_size = models.PositiveBigIntegerField(default=0)

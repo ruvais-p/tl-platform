@@ -78,7 +78,7 @@ define([], function () {
             });
         }
         return request(apiUrl, token, '/api/v1/programs/').then(function (programs) {
-            return findWorkshopActivity(programs);
+            return findWorkshopActivity(programs.results || programs);
         }).catch(function () {
             return null;
         });
@@ -150,6 +150,11 @@ define([], function () {
         });
     }
 
+    function loadProgress(apiUrl, token, activityId) {
+        if (!apiUrl || !token || !activityId) return Promise.resolve(null);
+        return request(apiUrl, token, '/api/v1/me/activities/' + activityId + '/progress/').catch(function () { return null; });
+    }
+
     function getWorkingOpen() {
         return localStorage.getItem(workingKey) === '1';
     }
@@ -160,6 +165,7 @@ define([], function () {
 
     return {
         loadActivity: loadActivity,
+        loadProgress: loadProgress,
         saveProgress: saveProgress,
         saveModel: saveModel,
         flush: flush,

@@ -8,7 +8,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class hook_callbacks {
     /**
-     * Add Modelling to the site primary navigation (Home / Dashboard / My courses).
+     * Add Skill Enhancement to the site primary navigation (Home / Dashboard / My courses).
      *
      * @param \core\hook\navigation\primary_extend $hook
      */
@@ -21,7 +21,7 @@ class hook_callbacks {
             new \moodle_url('/local/tella_workshop/index.php'),
             \navigation_node::TYPE_CUSTOM,
             null,
-            'tella_modelling'
+            'tella_skill_enhancement'
         );
     }
 }

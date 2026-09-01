@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.utils.text import slugify
+import uuid
 
 from assessments.models import LearningCheck, Question
 from content.models import ActivityContent, Experiment, PracticeSet, Video
@@ -135,9 +136,55 @@ class PracticeSetForm(forms.ModelForm):
 
 
 class MediaAssetForm(forms.ModelForm):
+    upload = forms.FileField(
+        required=False,
+        help_text="Upload an MP4, WebM, or Ogg video (maximum 500 MB). Metadata is filled automatically.",
+        widget=forms.ClearableFileInput(attrs={"accept": "video/mp4,video/webm,video/ogg"}),
+    )
+
     class Meta:
         model = MediaAsset
-        fields = ("file_name", "file_type", "mime_type", "file_size", "storage_path", "cdn_url", "duration_seconds", "status")
+        fields = ("upload", "file_name", "file_type", "mime_type", "file_size", "storage_path", "cdn_url", "duration_seconds", "status")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("file_name", "file_type", "mime_type", "file_size", "storage_path", "status"):
+            self.fields[name].required = False
+
+    def clean_upload(self):
+        upload = self.cleaned_data.get("upload")
+        if not upload:
+            return upload
+        if upload.size > 500 * 1024 * 1024:
+            raise forms.ValidationError("Video files must be 500 MB or smaller.")
+        if (getattr(upload, "content_type", "") or "").lower() not in {"video/mp4", "video/webm", "video/ogg"}:
+            raise forms.ValidationError("Upload an MP4, WebM, or Ogg video.")
+        return upload
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("upload") and not self.instance.pk:
+            for name in ("file_name", "file_type", "mime_type", "storage_path"):
+                if not cleaned.get(name):
+                    self.add_error(name, "Provide this metadata or upload a video file.")
+        return cleaned
+
+    def save(self, commit=True):
+        upload = self.cleaned_data.get("upload")
+        if upload:
+            self.instance.file = upload
+            self.instance.file_name = upload.name
+            self.instance.file_type = "VIDEO"
+            self.instance.mime_type = upload.content_type
+            self.instance.file_size = upload.size
+            self.instance.status = MediaAsset.Status.READY
+            self.instance.storage_path = f"upload-pending/{uuid.uuid4().hex}"
+        asset = super().save(commit=commit)
+        if commit and upload:
+            asset.storage_path = asset.file.name
+            asset.cdn_url = asset.file.url
+            asset.save(update_fields=("storage_path", "cdn_url"))
+        return asset
 
 
 class StudentGroupForm(forms.ModelForm):
