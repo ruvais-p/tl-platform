@@ -1,7 +1,12 @@
+from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+from .permissions import active_permission_queryset, filter_active_permission_keys
+from .services import create_managed_user, update_managed_user
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,14 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id", "email", "username", "first_name", "last_name", "display_name",
-            "is_active", "date_joined", "groups", "permissions",
+            "is_active", "is_superuser", "date_joined", "groups", "permissions",
         )
+        read_only_fields = ("is_superuser",)
 
     def get_groups(self, obj) -> list[str]:
         return list(obj.groups.order_by("name").values_list("name", flat=True))
 
     def get_permissions(self, obj) -> list[str]:
-        return sorted(obj.get_all_permissions())
+        return filter_active_permission_keys(obj.get_all_permissions())
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -32,3 +38,109 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
         token["groups"] = list(user.groups.values_list("name", flat=True))
         return token
+
+
+class ManagedUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, allow_blank=False)
+    groups = serializers.SlugRelatedField(
+        many=True,
+        slug_field="name",
+        queryset=Group.objects.order_by("name"),
+        required=False,
+    )
+    display_name = serializers.CharField(read_only=True)
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id", "email", "username", "first_name", "last_name", "display_name",
+            "password", "is_active", "date_joined", "groups", "permissions",
+        )
+        read_only_fields = ("id", "date_joined", "display_name", "permissions")
+
+    def validate_password(self, value):
+        candidate = User(
+            email=self.initial_data.get("email", getattr(self.instance, "email", "")),
+            username=self.initial_data.get("username", getattr(self.instance, "username", "")),
+            first_name=self.initial_data.get("first_name", getattr(self.instance, "first_name", "")),
+            last_name=self.initial_data.get("last_name", getattr(self.instance, "last_name", "")),
+        )
+        try:
+            validate_password(value, candidate)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages) from exc
+        return value
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get("password"):
+            raise serializers.ValidationError({"password": "A password is required."})
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        groups = validated_data.pop("groups", [])
+        password = validated_data.pop("password")
+        return create_managed_user(
+            actor=request.user,
+            password=password,
+            groups=groups,
+            **validated_data,
+        )
+
+    def update(self, instance, validated_data):
+        request = self.context["request"]
+        groups = validated_data.pop("groups", None)
+        password = validated_data.pop("password", None)
+        return update_managed_user(
+            actor=request.user,
+            user=instance,
+            password=password,
+            groups=groups,
+            **validated_data,
+        )
+
+    def get_permissions(self, obj) -> list[str]:
+        return filter_active_permission_keys(obj.get_all_permissions())
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+    user_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Group
+        fields = ("id", "name", "user_count", "permissions")
+
+    def get_permissions(self, obj) -> list[str]:
+        return filter_active_permission_keys(
+            f"{permission.content_type.app_label}.{permission.codename}"
+            for permission in obj.permissions.all()
+        )
+
+
+class RolePermissionsSerializer(serializers.Serializer):
+    permissions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    def validate_permissions(self, values):
+        available = {
+            f"{permission.content_type.app_label}.{permission.codename}": permission
+            for permission in active_permission_queryset().select_related("content_type")
+        }
+        missing = sorted(set(values) - available.keys())
+        if missing:
+            raise serializers.ValidationError(f"Unknown permissions: {', '.join(missing)}")
+        self.context["resolved_permissions"] = [available[value] for value in dict.fromkeys(values)]
+        return values
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+    key = serializers.SerializerMethodField()
+    app_label = serializers.CharField(source="content_type.app_label", read_only=True)
+
+    class Meta:
+        model = Permission
+        fields = ("id", "key", "name", "app_label", "codename")
+
+    def get_key(self, obj) -> str:
+        return f"{obj.content_type.app_label}.{obj.codename}"

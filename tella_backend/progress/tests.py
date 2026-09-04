@@ -8,7 +8,10 @@ from accounts.models import User
 from curriculum.models import Chapter, Course, CourseVersion, LearningActivity, Program, Subtopic
 from students.models import Enrollment
 
-from .models import ActivityProgress, ChapterProgress, CourseProgress, SubtopicProgress
+from .models import (
+    ActivityProgress, CareerOpportunity, ChapterProgress, CourseProgress,
+    SubtopicProgress,
+)
 from .services import ProgressService
 
 # Create your tests here.
@@ -42,3 +45,81 @@ class ProgressServiceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["progress_percentage"], "50.00")
         self.assertEqual(client.get("/api/v1/me/progress/").status_code, 200)
+
+    def test_student_can_list_own_activity_progress_for_a_course(self):
+        ProgressService.record_activity_progress(
+            student=self.student,
+            activity=self.activity,
+            enrollment=self.enrollment,
+            progress_percentage=50,
+        )
+        other_student = User.objects.create_user(email="other-progress@example.com", password="pass12345")
+        other_student.groups.add(Group.objects.get(name=GroupName.STUDENT))
+        other_enrollment = Enrollment.objects.create(
+            student=other_student,
+            course=self.enrollment.course,
+            course_version=self.enrollment.course_version,
+        )
+        ProgressService.record_activity_progress(
+            student=other_student,
+            activity=self.activity,
+            enrollment=other_enrollment,
+            progress_percentage=100,
+        )
+
+        client = APIClient()
+        client.force_authenticate(self.student)
+        response = client.get(
+            "/api/v1/me/activity-progress/",
+            {"course": str(self.enrollment.course_id)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["activity"], self.activity.id)
+        self.assertEqual(response.data[0]["progress_percentage"], "50.00")
+
+    def test_admin_can_review_activity_progress(self):
+        ProgressService.record_activity_progress(
+            student=self.student,
+            activity=self.activity,
+            enrollment=self.enrollment,
+            progress_percentage=50,
+        )
+        admin = User.objects.create_user(
+            email="progress-admin@example.com", password="StrongPass123!"
+        )
+        admin.groups.add(Group.objects.get(name=GroupName.ADMIN))
+        client = APIClient()
+        client.force_authenticate(admin)
+
+        response = client.get("/api/v1/activity-progress-records/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["student_email"], self.student.email)
+        self.assertEqual(response.data[0]["activity_title"], self.activity.title)
+
+    def test_super_admin_can_manage_career_opportunities(self):
+        super_admin = User.objects.create_user(
+            email="career-admin@example.com", password="StrongPass123!"
+        )
+        super_admin.groups.add(Group.objects.get(name=GroupName.SUPER_ADMIN))
+        client = APIClient()
+        client.force_authenticate(super_admin)
+
+        response = client.post(
+            "/api/v1/career-opportunities/",
+            {
+                "title": "Analyst internship",
+                "kind": "internship",
+                "summary": "Apply optimization skills.",
+                "url": "https://example.com/careers/analyst",
+                "is_published": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertTrue(
+            CareerOpportunity.objects.filter(title="Analyst internship").exists()
+        )

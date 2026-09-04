@@ -4,14 +4,25 @@ import time
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.db.models import Count, Q
 from rest_framework import status
+from rest_framework import mixins, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import EmailTokenObtainPairSerializer, UserSerializer
+from .permissions import CanManagePermissions, CanManageUsers, active_permission_queryset
+from .serializers import (
+    EmailTokenObtainPairSerializer,
+    ManagedUserSerializer,
+    PermissionSerializer,
+    RolePermissionsSerializer,
+    RoleSerializer,
+    UserSerializer,
+)
 from .constants import GroupName
 from .models import User
 from students.models import ExternalUserMapping
@@ -84,3 +95,129 @@ class MoodleExchangeView(APIView):
         user.groups.add(student_group)
         refresh = RefreshToken.for_user(user)
         return Response({"access": str(refresh.access_token), "refresh": str(refresh), "user": UserSerializer(user).data})
+
+
+class ManagedUserViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    serializer_class = ManagedUserSerializer
+    permission_classes = [IsAuthenticated, CanManageUsers]
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+
+    def get_queryset(self):
+        queryset = User.objects.prefetch_related("groups", "user_permissions").order_by("email")
+        query = self.request.query_params.get("q", "").strip()
+        if query:
+            queryset = queryset.filter(
+                Q(email__icontains=query)
+                | Q(username__icontains=query)
+                | Q(first_name__icontains=query)
+                | Q(last_name__icontains=query)
+            )
+        return queryset
+
+
+class RoleViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = RoleSerializer
+
+    def get_queryset(self):
+        return Group.objects.annotate(user_count=Count("user")).prefetch_related(
+            "permissions__content_type"
+        ).order_by("name")
+
+    def get_permissions(self):
+        permission_classes = (
+            [IsAuthenticated, CanManagePermissions]
+            if self.action == "set_permissions"
+            else [IsAuthenticated, CanManageUsers]
+        )
+        return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=["patch", "put"], url_path="permissions")
+    def set_permissions(self, request, pk=None):
+        role = self.get_object()
+        serializer = RolePermissionsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        role.permissions.set(serializer.context["resolved_permissions"])
+        role = self.get_queryset().get(pk=role.pk)
+        return Response(self.get_serializer(role).data)
+
+
+class PermissionCatalogView(APIView):
+    permission_classes = [IsAuthenticated, CanManagePermissions]
+
+    def get(self, request):
+        permissions = active_permission_queryset().select_related("content_type").order_by(
+            "content_type__app_label", "codename"
+        )
+        return Response(PermissionSerializer(permissions, many=True).data)
+
+
+class StaffSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from curriculum.models import Program
+        from curriculum.selectors import accessible_courses
+        from progress.models import CourseProgress
+        from students.selectors import visible_enrollments, visible_students
+
+        records = []
+        if request.user.has_perm("curriculum.view_program"):
+            records.append(
+                {
+                    "key": "programs",
+                    "label": "Programs",
+                    "count": Program.objects.count(),
+                    "href": "/manage/programs",
+                }
+            )
+        if request.user.has_perm("curriculum.view_course"):
+            records.append(
+                {
+                    "key": "courses",
+                    "label": "Courses",
+                    "count": accessible_courses(request.user).count(),
+                    "href": "/courses",
+                }
+            )
+        if request.user.has_perm("accounts.view_user"):
+            records.append(
+                {
+                    "key": "students",
+                    "label": "Students",
+                    "count": visible_students(request.user).count(),
+                    "href": "/manage/students",
+                }
+            )
+        if request.user.has_perm("students.view_enrollment"):
+            records.append(
+                {
+                    "key": "enrollments",
+                    "label": "Enrollments",
+                    "count": visible_enrollments(request.user).count(),
+                    "href": "/manage/enrollments",
+                }
+            )
+        if request.user.has_perm("progress.view_all_student_progress"):
+            progress_count = CourseProgress.objects.count()
+        elif request.user.has_perm("progress.view_assigned_student_progress"):
+            progress_count = CourseProgress.objects.filter(
+                enrollment__student__student_group_memberships__student_group__teacher=request.user
+            ).distinct().count()
+        else:
+            progress_count = None
+        if progress_count is not None:
+            records.append(
+                {
+                    "key": "course-progress",
+                    "label": "Progress records",
+                    "count": progress_count,
+                    "href": "/manage/activity-progress-records",
+                }
+            )
+        return Response({"records": records})

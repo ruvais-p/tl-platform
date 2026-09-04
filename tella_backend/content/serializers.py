@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from .experiment_definitions import ExperimentDefinitionError, validate_experiment_configuration
 from .models import ActivityContent, Experiment, PracticeItem, PracticeSet, Video
 
 
@@ -29,6 +30,12 @@ class ExperimentSerializer(serializers.ModelSerializer):
             "external_url", "created_at", "updated_at",
         )
         read_only_fields = ("created_at", "updated_at")
+
+    def validate_configuration(self, value):
+        try:
+            return validate_experiment_configuration(value)
+        except ExperimentDefinitionError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
 
 
 class PracticeItemSerializer(serializers.ModelSerializer):

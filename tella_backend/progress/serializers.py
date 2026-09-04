@@ -1,8 +1,8 @@
 from rest_framework import serializers
 
 from .models import (
-    ActivityProgress, BadgeAward, CareerOpportunity, ChapterProgress,
-    CourseProgress, PointEvent, SubtopicProgress,
+    ActivityProgress, AssessmentAttempt, BadgeAward, CareerOpportunity,
+    ChapterProgress, CourseProgress, PointEvent, SubtopicProgress,
 )
 
 
@@ -72,3 +72,70 @@ class CareerOpportunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = CareerOpportunity
         fields = ("id", "title", "kind", "summary", "url")
+
+
+class StaffActivityProgressSerializer(serializers.ModelSerializer):
+    student_email = serializers.EmailField(
+        source="enrollment.student.email", read_only=True
+    )
+    course_name = serializers.CharField(
+        source="enrollment.course.name", read_only=True
+    )
+    activity_title = serializers.CharField(source="activity.title", read_only=True)
+
+    class Meta:
+        model = ActivityProgress
+        fields = tuple(field.name for field in ActivityProgress._meta.fields) + (
+            "student_email",
+            "course_name",
+            "activity_title",
+        )
+        read_only_fields = fields
+
+
+class StaffPointEventSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    activity_title = serializers.CharField(source="activity.title", read_only=True)
+
+    class Meta:
+        model = PointEvent
+        fields = tuple(field.name for field in PointEvent._meta.fields) + (
+            "user_email",
+            "activity_title",
+        )
+        read_only_fields = fields
+
+
+class StaffBadgeAwardSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    activity_title = serializers.CharField(source="activity.title", read_only=True)
+    label = serializers.CharField(source="get_code_display", read_only=True)
+
+    class Meta:
+        model = BadgeAward
+        fields = tuple(field.name for field in BadgeAward._meta.fields) + (
+            "user_email",
+            "activity_title",
+            "label",
+        )
+        read_only_fields = fields
+
+
+class StaffCareerOpportunitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CareerOpportunity
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+
+class StaffLegacyAssessmentAttemptSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    activity_title = serializers.CharField(source="activity.title", read_only=True)
+
+    class Meta:
+        model = AssessmentAttempt
+        fields = tuple(field.name for field in AssessmentAttempt._meta.fields) + (
+            "user_email",
+            "activity_title",
+        )
+        read_only_fields = fields

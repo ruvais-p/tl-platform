@@ -1,7 +1,5 @@
 define([], function () {
     var queueKey = 'tella.progressQueue';
-    var modelKey = 'tella.savedModels';
-    var workingKey = 'tella.workingOpen';
 
     function loadQueue() {
         try {
@@ -37,7 +35,16 @@ define([], function () {
         });
     }
 
-    function findWorkshopActivity(programs) {
+    function hasExperimentDefinition(activity) {
+        return Boolean(
+            activity && activity.experiment && activity.experiment.configuration &&
+            typeof activity.experiment.configuration.renderer === 'string' &&
+            activity.experiment.configuration.renderer
+        );
+    }
+
+    function findExperimentActivity(response) {
+        var programs = Array.isArray(response) ? response : (response && response.results) || [];
         var p;
         var c;
         var ch;
@@ -57,7 +64,7 @@ define([], function () {
                     for (st = 0; st < subs.length; st++) {
                         var acts = subs[st].activities || [];
                         for (a = 0; a < acts.length; a++) {
-                            if (acts[a].activity_type === 'INTERACTIVE_WORKSHOP') {
+                            if (hasExperimentDefinition(acts[a])) {
                                 return acts[a];
                             }
                         }
@@ -78,7 +85,7 @@ define([], function () {
             });
         }
         return request(apiUrl, token, '/api/v1/programs/').then(function (programs) {
-            return findWorkshopActivity(programs);
+            return findExperimentActivity(programs);
         }).catch(function () {
             return null;
         });
@@ -98,16 +105,18 @@ define([], function () {
         if (!q.length) {
             return Promise.resolve();
         }
+        var failed = [];
         var next = Promise.resolve();
         q.forEach(function (item) {
             next = next.then(function () {
                 return request(apiUrl, token, item.path, {method: item.method, body: item.body});
             }).catch(function () {
+                failed.push(item);
                 return null;
             });
         });
         return next.then(function () {
-            saveQueue([]);
+            saveQueue(failed);
         });
     }
 
@@ -122,25 +131,6 @@ define([], function () {
         });
     }
 
-    function saveModel(apiUrl, token, body) {
-        var local = [];
-        try {
-            local = JSON.parse(localStorage.getItem(modelKey) || '[]');
-        } catch (e) {
-            local = [];
-        }
-        local.unshift(body);
-        localStorage.setItem(modelKey, JSON.stringify(local.slice(0, 8)));
-        if (!apiUrl || !token || !navigator.onLine) {
-            enqueue({path: '/api/v1/workshop-models/', method: 'POST', body: body});
-            return Promise.resolve(body);
-        }
-        return request(apiUrl, token, '/api/v1/workshop-models/', {method: 'POST', body: body}).catch(function () {
-            enqueue({path: '/api/v1/workshop-models/', method: 'POST', body: body});
-            return body;
-        });
-    }
-
     function loadCareers(apiUrl, token) {
         if (!apiUrl || !token) {
             return Promise.resolve([]);
@@ -150,21 +140,10 @@ define([], function () {
         });
     }
 
-    function getWorkingOpen() {
-        return localStorage.getItem(workingKey) === '1';
-    }
-
-    function setWorkingOpen(open) {
-        localStorage.setItem(workingKey, open ? '1' : '0');
-    }
-
     return {
         loadActivity: loadActivity,
         saveProgress: saveProgress,
-        saveModel: saveModel,
         flush: flush,
-        loadCareers: loadCareers,
-        getWorkingOpen: getWorkingOpen,
-        setWorkingOpen: setWorkingOpen
+        loadCareers: loadCareers
     };
 });

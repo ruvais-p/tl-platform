@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from workshops.models import WorkshopConfig
-
 from .models import Chapter, Course, CourseVersion, LearningActivity, Program, Subtopic
 
 
@@ -14,29 +12,29 @@ class ActivityContentRecordSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(read_only=True)
 
 
-class WorkshopConfigSerializer(serializers.ModelSerializer):
-    config = serializers.SerializerMethodField()
-
-    class Meta:
-        model = WorkshopConfig
-        fields = ("id", "name", "config")
-
-    def get_config(self, obj):
-        return obj.as_config()
+class ActivityExperimentRecordSerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    activity = serializers.PrimaryKeyRelatedField(read_only=True)
+    experiment_type = serializers.CharField(read_only=True)
+    instructions = serializers.CharField(read_only=True)
+    configuration = serializers.JSONField(read_only=True)
+    external_url = serializers.URLField(read_only=True, allow_null=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
 
 
 class LearningActivitySerializer(serializers.ModelSerializer):
-    workshop = WorkshopConfigSerializer(source="workshop_config", read_only=True)
     content = serializers.JSONField(source="content.content", read_only=True, default=dict)
     content_record = ActivityContentRecordSerializer(source="content", read_only=True, default=None)
+    experiment = ActivityExperimentRecordSerializer(read_only=True, default=None)
 
     class Meta:
         model = LearningActivity
         fields = (
             "id", "subtopic", "activity_type", "title", "description", "display_order",
             "is_required", "estimated_minutes", "completion_rule", "status",
-            "created_by", "updated_by", "created_at", "updated_at", "workshop", "content",
-            "content_record",
+            "created_by", "updated_by", "created_at", "updated_at", "content",
+            "content_record", "experiment",
         )
         read_only_fields = ("created_by", "updated_by", "created_at", "updated_at")
 

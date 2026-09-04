@@ -1,1 +1,0 @@
-{% extends "admin_portal/base.html" %}{% block title %}Group permissions{% endblock %}{% block content %}<h1>{{ group.name }} permissions</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Save permissions</button></form>{% endblock %}

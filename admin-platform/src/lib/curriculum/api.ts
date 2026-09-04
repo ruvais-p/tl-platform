@@ -1,4 +1,4 @@
-import type { Activity, ApiErrorBody, Chapter, ContentRecord, Course, CourseVersion, Program, Subtopic, User, UUID } from "./types";
+import type { Activity, ApiErrorBody, Chapter, ContentRecord, Course, CourseVersion, ExperimentRecord, Program, Subtopic, User, UUID } from "./types";
 
 function errorMessage(body:ApiErrorBody,status:number){if(body.error?.message)return body.error.message;if(body.detail)return body.detail;for(const[key,value]of Object.entries(body)){if(Array.isArray(value)&&value.length)return `${key.replaceAll("_"," ")}: ${String(value[0])}`}return `Request failed (${status})`}
 export class ApiError extends Error { constructor(public status: number, public body: ApiErrorBody) { super(errorMessage(body,status)); } }
@@ -20,6 +20,7 @@ export const curriculumApi = {
   update: <T>(resource: string,id:UUID,data:Partial<T>) => request<T>(`curriculum/${resource}/${id}`,{method:"PATCH",body:json(data)}),
   remove: (resource:string,id:UUID) => request<void>(`curriculum/${resource}/${id}`,{method:"DELETE"}),
   saveContent: (activity: UUID, record: ContentRecord | null, content_type:string, content:Record<string,unknown>) => record ? request<ContentRecord>(`curriculum/activity-content/${record.id}`,{method:"PATCH",body:json({content_type,content})}) : request<ContentRecord>("curriculum/activity-content",{method:"POST",body:json({activity,content_type,content})}),
+  saveExperiment: (activity: UUID, record: ExperimentRecord | null, data: Pick<ExperimentRecord,"experiment_type"|"instructions"|"configuration"|"external_url">) => record ? request<ExperimentRecord>(`curriculum/experiments/${record.id}`,{method:"PATCH",body:json(data)}) : request<ExperimentRecord>("curriculum/experiments",{method:"POST",body:json({activity,...data})}),
   reorder: (path:string,ids:UUID[]) => request<void>(`curriculum/${path}`,{method:"POST",body:json({ids})}),
   publish: (course:UUID,version:UUID) => request<Course>(`curriculum/courses/${course}/publish`,{method:"POST",body:json({version_id:version})}),
 };

@@ -85,21 +85,21 @@ Under `/api/v1/`:
 
 Use DRF ViewSets + Serializers. All responses must be JSON and must not leak internal mathematical names.
 
-## 1.5 Admin (Django Templates)
+## 1.5 Staff administration
 
-Minimal ModelAdmin classes so Content Managers can:
+Expose permission-checked JSON endpoints and implement the corresponding Next.js staff screens so Content Managers can:
 
 - Create a Program → Course → LearningActivity of type INTERACTIVE_WORKSHOP
 - Attach a WorkshopConfig (the seven numbers + product labels)
 - Publish / unpublish
 
-Later phases will expand the admin UI.
+Django remains API-only. Operational reports and compatibility records also live in the permission-aware Next.js workspace.
 
 ## 1.6 Acceptance Criteria
 
 - [ ] `python manage.py migrate` succeeds with zero errors
 - [ ] Custom User model is the only user model
-- [ ] A Content Manager can create a Course containing one INTERACTIVE_WORKSHOP activity via Django admin
+- [ ] A Content Manager can create a Course containing one INTERACTIVE_WORKSHOP activity via the Next.js staff workspace
 - [ ] `GET /api/v1/courses/{id}/` returns a nested JSON structure consumable by the Moodle plugin
 - [ ] CORS allows the local Moodle origin
 - [ ] All models use UUID primary keys and proper timestamps

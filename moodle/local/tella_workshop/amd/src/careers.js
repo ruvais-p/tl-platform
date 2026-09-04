@@ -1,27 +1,60 @@
 define(['local_tella_workshop/api'], function (api) {
-    function render(root, state, actions) {
-        var placeholder = (state && state.careersPlaceholder) ||
-            ((window.M && M.cfg) ? '' : '') ||
-            'Opportunities from partner organisations will appear here.';
-        if (state && state.strings && state.strings.careersplaceholder) {
-            placeholder = state.strings.careersplaceholder;
+    function addText(documentRef, parent, tagName, className, text) {
+        var element = documentRef.createElement(tagName);
+        element.className = className;
+        element.textContent = text || '';
+        parent.appendChild(element);
+        return element;
+    }
+
+    function safeUrl(value, windowRef) {
+        if (typeof value !== 'string' || !value.trim()) {
+            return '';
         }
-        root.innerHTML = '<div class="tella-screen" data-screen="careers">' +
-            '<p class="text-muted">' + escapeHtml(placeholder) + '</p>' +
-            '<div class="tella-split" data-role="list"></div></div>';
+        try {
+            var parsed = new windowRef.URL(value, windowRef.location.href);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : '';
+        } catch (ignore) {
+            return '';
+        }
+    }
+
+    function render(root, state) {
+        var documentRef = root.ownerDocument || document;
+        var windowRef = documentRef.defaultView || window;
+        var strings = state.strings || {};
+        var status = root.querySelector('[data-role="status"]');
         var list = root.querySelector('[data-role="list"]');
-        api.loadCareers(state.apiUrl, state.token).then(function (items) {
+        if (!state.apiUrl || !state.token) {
+            status.textContent = strings.authenticationRequired || 'Sign in through Moodle to load opportunities.';
+            return Promise.resolve([]);
+        }
+        return api.loadCareers(state.apiUrl, state.token).then(function (items) {
             if (!items || !items.length) {
                 return;
             }
-            list.innerHTML = items.map(function (item) {
-                return '<article class="tella-card tella-job">' +
-                    '<h3>' + escapeHtml(item.title) + '</h3>' +
-                    '<p class="text-muted">' + escapeHtml((item.kind || '').replace(/_/g, ' ')) + '</p>' +
-                    '<p>' + escapeHtml(item.summary || '') + '</p>' +
-                    (item.url ? '<a href="' + escapeHtml(item.url) + '">Open details</a>' : '') +
-                    '</article>';
-            }).join('');
+            status.hidden = true;
+            list.textContent = '';
+            items.forEach(function (item) {
+                var card = documentRef.createElement('article');
+                card.className = 'tella-careers-card';
+                addText(documentRef, card, 'h3', 'tella-careers-title', item.title);
+                addText(documentRef, card, 'p', 'tella-careers-kind', (item.kind || '').replace(/_/g, ' '));
+                addText(documentRef, card, 'p', 'tella-careers-summary', item.summary);
+                var url = safeUrl(item.url, windowRef);
+                if (url) {
+                    var link = addText(
+                        documentRef,
+                        card,
+                        'a',
+                        'tella-careers-link',
+                        strings.openDetails || 'Open details'
+                    );
+                    link.href = url;
+                    link.rel = 'noopener noreferrer';
+                }
+                list.appendChild(card);
+            });
         });
     }
 
@@ -30,13 +63,7 @@ define(['local_tella_workshop/api'], function (api) {
         if (!root) {
             return;
         }
-        render(root, {apiUrl: cfg.apiUrl, token: cfg.token, strings: cfg.strings || {}}, {});
-    }
-
-    function escapeHtml(value) {
-        return String(value || '').replace(/[&<>"']/g, function (ch) {
-            return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]);
-        });
+        return render(root, {apiUrl: cfg.apiUrl, token: cfg.token, strings: cfg.strings || {}});
     }
 
     return {init: init, render: render};

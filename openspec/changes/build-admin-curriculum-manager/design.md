@@ -16,7 +16,7 @@ The repository contains a Django REST API and a newly scaffolded Next.js 16 appl
 
 **Non-Goals:**
 
-- Replacing Django's existing product portal or Django admin in this change.
+- Replacing Django's operational admin in this change.
 - Managing students, cohorts, enrollments, assessments, media uploads, or reporting.
 - Adding collaborative editing, autosave, offline authoring, or optimistic publication.
 - Changing curriculum models, status values, authorization rules, or publication semantics.

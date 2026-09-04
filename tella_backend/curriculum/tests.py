@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from accounts.constants import GroupName
 from accounts.models import User
-from content.models import ActivityContent
+from content.models import ActivityContent, Experiment
 from media_library.models import MediaAsset
 from students.models import Enrollment
 
@@ -124,6 +124,26 @@ class CurriculumApiTests(CurriculumFixtureMixin, TestCase):
         response = self.client.post(reverse("course-publish", args=[self.course.id]), {"version_id": str(self.version.id)}, format="json")
         self.assertEqual(response.status_code, 403)
 
+    def test_content_manager_can_reorder_activities_api(self):
+        second = LearningActivity.objects.create(
+            subtopic=self.subtopic,
+            activity_type=LearningActivity.ActivityType.HOMEWORK,
+            title="Homework",
+            display_order=1,
+        )
+        self.client.force_authenticate(self.content_manager)
+
+        response = self.client.post(
+            reverse("subtopic-reorder-activities", args=[self.subtopic.id]),
+            {"ids": [str(second.id), str(self.activity.id)]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.activity.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual((second.display_order, self.activity.display_order), (0, 1))
+
     def test_activity_representation_includes_nullable_content_record(self):
         self.client.force_authenticate(self.academic)
         response = self.client.get(reverse("activity-detail", args=[self.activity.id]))
@@ -141,19 +161,72 @@ class CurriculumApiTests(CurriculumFixtureMixin, TestCase):
         self.assertEqual(response.data["content_record"]["id"], str(content.id))
         self.assertEqual(response.data["content_record"]["content_type"], content.content_type)
 
+    def test_activity_representation_includes_admin_authored_experiment(self):
+        activity = LearningActivity.objects.create(
+            subtopic=self.subtopic,
+            activity_type=LearningActivity.ActivityType.EXPERIMENT,
+            title="Dynamic experiment",
+            display_order=1,
+            status=PublishStatus.PUBLISHED,
+        )
+        configuration = {
+            "schema_version": 1,
+            "renderer": "placeholder",
+            "renderer_config": {"message": "Admin supplied"},
+        }
+        experiment = Experiment.objects.create(
+            activity=activity,
+            experiment_type=Experiment.ExperimentType.SIMULATION,
+            instructions="Admin supplied instructions",
+            configuration=configuration,
+        )
+        self.client.force_authenticate(self.academic)
+
+        response = self.client.get(reverse("activity-detail", args=[activity.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["experiment"]["id"], str(experiment.id))
+        self.assertEqual(response.data["experiment"]["configuration"], configuration)
+
+    def test_enrolled_student_receives_experiment_definition(self):
+        self.publish_tree()
+        self.activity.activity_type = LearningActivity.ActivityType.EXPERIMENT
+        self.activity.save(update_fields=["activity_type"])
+        configuration = {"schema_version": 1, "renderer": "placeholder"}
+        Experiment.objects.create(
+            activity=self.activity,
+            experiment_type=Experiment.ExperimentType.SIMULATION,
+            instructions="Admin supplied instructions",
+            configuration=configuration,
+        )
+        Enrollment.objects.create(student=self.student, course=self.course, course_version=self.version)
+        self.client.force_authenticate(self.student)
+
+        response = self.client.get(reverse("activity-detail", args=[self.activity.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["experiment"]["configuration"], configuration)
+
     def test_nested_course_content_prefetch_has_constant_query_cost(self):
         ActivityContent.objects.create(activity=self.activity, content={"value": 1})
         second = LearningActivity.objects.create(
-            subtopic=self.subtopic, activity_type=LearningActivity.ActivityType.READING,
+            subtopic=self.subtopic, activity_type=LearningActivity.ActivityType.EXPERIMENT,
             title="Reading", display_order=1, created_by=self.academic, updated_by=self.academic,
         )
         ActivityContent.objects.create(activity=second, content={"value": 2})
+        Experiment.objects.create(
+            activity=second,
+            experiment_type=Experiment.ExperimentType.SIMULATION,
+            instructions="Admin supplied",
+            configuration={"schema_version": 1, "renderer": "placeholder"},
+        )
         self.client.force_authenticate(self.academic)
         with self.assertNumQueries(9):
             response = self.client.get(reverse("course-detail", args=[self.course.id]))
             self.assertEqual(response.status_code, 200)
             records = response.data["versions"][0]["chapters"][0]["subtopics"][0]["activities"]
             self.assertEqual([row["content_record"]["content"]["value"] for row in records], [1, 2])
+            self.assertEqual(records[1]["experiment"]["configuration"]["renderer"], "placeholder")
 
     def test_student_can_only_see_enrolled_published_course(self):
         self.publish_tree()

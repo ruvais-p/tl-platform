@@ -13,6 +13,33 @@ describe("typed curriculum client", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/curriculum/activity-content", expect.objectContaining({ method: "POST" }));
   });
 
+  it("creates an admin-driven experiment without dropping extension fields", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => Response.json({
+      id: "experiment",
+      activity: "activity",
+      created_at: "now",
+      updated_at: "now",
+      ...JSON.parse(String(init?.body)),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const configuration = {
+      schema_version: 1,
+      renderer: "placeholder",
+      renderer_config: { message: "Supplied by an administrator" },
+      future_extension: { kept: true },
+    };
+
+    const result = await curriculumApi.saveExperiment("activity", null, {
+      experiment_type: "SIMULATION",
+      instructions: "Admin supplied instructions",
+      configuration,
+      external_url: null,
+    });
+
+    expect(result.configuration).toEqual(configuration);
+    expect(fetchMock).toHaveBeenCalledWith("/api/curriculum/experiments", expect.objectContaining({ method: "POST" }));
+  });
+
   it("preserves permission errors for the editor", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: "You do not have permission." }, { status: 403 })));
     await expect(curriculumApi.update("activities", "id", { title: "Unsaved" })).rejects.toMatchObject({ status: 403 });

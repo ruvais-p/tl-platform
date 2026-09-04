@@ -1,6 +1,6 @@
 # Tella Data Entry and Creation Guide
 
-This guide explains how an administrator creates platform data in the correct dependency order. Use the Django management portal for common authoring tasks, or the versioned REST API for imports and integrations.
+This guide explains how an administrator creates platform data in the correct dependency order. Use the permission-aware Next.js staff workspace for day-to-day administration, or the versioned REST API for imports and integrations.
 
 ## 1. Prepare the environment
 
@@ -13,7 +13,7 @@ python manage.py createsuperuser
 python manage.py runserver 0.0.0.0:8000
 ```
 
-Open `http://127.0.0.1:8000/manage/` and sign in through Django. The portal requires a staff user with the relevant Django permission. Use `/admin/` only for low-level Django administration; `/manage/` is the product portal.
+Start the Next.js application and sign in at `http://localhost:3000/login`. A Django superuser may sign in without an additional group assignment. Django exposes only the JSON backend at `/api/v1/`; all staff web workflows live in Next.js.
 
 For API entry, obtain a token first:
 
@@ -39,7 +39,7 @@ Every reference to `<uuid>` below must be replaced with an ID returned by an ear
 
 ## 2. Create users and access roles
 
-Create users through `/admin/` or an authorized user-management workflow, then run `setup_groups` after migrations. Assign one or more Django Groups:
+Create users through an authorized provisioning workflow, then run `setup_groups` after migrations. Assign one or more Django Groups:
 
 ```text
 SUPER_ADMIN
@@ -50,7 +50,7 @@ TEACHER
 STUDENT
 ```
 
-The portal path `/manage/access/users/` searches users and `/manage/access/users/{user_id}/` adds/removes groups. An `ADMIN` cannot grant `SUPER_ADMIN` or change critical permissions. Permission administrators use `/manage/access/groups/`.
+Next.js: `/access`. Authorized administrators can create or edit accounts and assign ordinary roles. Only permission administrators can grant `SUPER_ADMIN` or edit role permissions; ordinary `ADMIN` accounts cannot edit protected accounts.
 
 Students and teachers must belong to the corresponding Django Group before they are used in enrollments or StudentGroups.
 
@@ -69,7 +69,7 @@ Program
 
 ### 3.1 Program
 
-Portal: `/manage/programs/new/`
+Next.js: `/manage/programs` (also linked from `/courses`).
 
 API: `POST /api/v1/programs/`
 
@@ -87,7 +87,7 @@ API: `POST /api/v1/programs/`
 
 ### 3.2 Course
 
-Portal: `/manage/courses/new/`
+Next.js: `/courses`
 
 API: `POST /api/v1/courses/`
 
@@ -106,6 +106,8 @@ The program must already exist. `code` is globally unique.
 
 ### 3.3 Course version
 
+Next.js: open a course from `/courses` and add a version in its structure editor.
+
 API: `POST /api/v1/course-versions/`
 
 ```json
@@ -120,6 +122,8 @@ API: `POST /api/v1/course-versions/`
 The `(course, version_number)` pair is unique. Enrollments always point to a specific version; publish new versions instead of rewriting historical progress.
 
 ### 3.4 Chapter, subtopic, activity
+
+Next.js: open a course from `/courses`. The editor exposes create, edit, and ordering controls only when the signed-in role has the corresponding Django permission.
 
 Chapter: `POST /api/v1/chapters/`
 
@@ -168,6 +172,8 @@ Each body is `{"ids":["<first-uuid>","<second-uuid>"]}` and must contain every c
 
 ## 4. Add content and media
 
+Next.js: use `/content` for content records and `/media` for uploaded assets.
+
 Create a `MediaAsset` first when content references a file:
 
 `POST /api/v1/media-assets/`
@@ -180,6 +186,14 @@ Create a `MediaAsset` first when content references a file:
 }
 ```
 
+For a local upload, send multipart form data instead of manufacturing storage metadata. The server stores the file, marks it ready, and returns `public_url` for playback:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/media-assets/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "upload=@equations.mp4" -F "duration_seconds=180"
+```
+
 Then create the structured content:
 
 - Video: `POST /api/v1/videos/` with `activity`, `media_asset`, title, duration, transcript, captions, and optional completion percentage.
@@ -189,7 +203,120 @@ Then create the structured content:
 
 Content managers can author drafts. Publishing is a separate permission.
 
+### 4.1 Runtime experiment definitions
+
+For a student-facing experiment, first create a LearningActivity whose `activity_type` is `EXPERIMENT`, `SIMULATION`, `INTERACTIVE`, or `INTERACTIVE_WORKSHOP`. Then create its one-to-one Experiment record in the curriculum editor or with `POST /api/v1/experiments/`.
+
+`configuration` is a declarative document. It never contains executable JavaScript. Lesson wording, variables, coefficients, limits, and questions belong in this published record rather than in either frontend. The stable envelope is:
+
+```json
+{
+  "schema_version": 1,
+  "renderer": "geogebra",
+  "renderer_config": {},
+  "tracking": {}
+}
+```
+
+The currently installed renderer adapters are `geogebra` and `placeholder`. Administrators can publish any number of lessons using these adapters without changing or reinstalling the Moodle plugin. Adding a fundamentally different renderer still requires a centrally released plugin update.
+
+#### GeoGebra
+
+A GeoGebra renderer supports two authoring modes:
+
+1. Supply a published GeoGebra `material_id`.
+2. Supply a validated `workspace` object. The installed generic workspace constructs a blank GeoGebra app from posted data, so each LPP lesson can use different variables and constraints without a frontend deployment.
+
+Material example:
+
+```json
+{
+  "activity": "<activity-uuid>",
+  "experiment_type": "EMBEDDED",
+  "instructions": "<student instructions authored by the administrator>",
+  "external_url": null,
+  "configuration": {
+    "schema_version": 1,
+    "renderer": "geogebra",
+    "renderer_config": {
+      "material_id": "<geogebra-material-id>",
+      "app_name": "graphing",
+      "width": 960,
+      "height": 600,
+      "parameters": {
+        "showToolBar": false,
+        "showMenuBar": false,
+        "showAlgebraInput": true,
+        "enableShiftDragZoom": true
+      }
+    },
+    "tracking": {
+      "watch_objects": ["<geogebra-object-name>"],
+      "progress_object": "<optional-0-to-100-object>",
+      "completion": {
+        "object": "<completion-object>",
+        "operator": "equals",
+        "value": 1
+      },
+      "throttle_ms": 1000
+    }
+  }
+}
+```
+
+Data-driven linear-programming example:
+
+```json
+{
+  "schema_version": 1,
+  "renderer": "geogebra",
+  "renderer_config": {
+    "app_name": "graphing",
+    "workspace": {
+      "type": "linear_programming",
+      "title": "Production mix",
+      "problem_statement": "Choose the most profitable feasible mix.",
+      "axis_variables": ["x1", "x2"],
+      "variables": [
+        {"id":"x1","label":"Product A","symbol":"x₁","unit":"units","min":0,"max":50,"initial":0,"step":1},
+        {"id":"x2","label":"Product B","symbol":"x₂","unit":"units","min":0,"max":25,"initial":0,"step":1}
+      ],
+      "objective": {"label":"Profit","sense":"maximize","currency":"₹","coefficients":{"x1":12,"x2":20}},
+      "constraints": [
+        {"id":"labour","label":"Assembly time","coefficients":{"x1":0.8,"x2":1.7},"operator":"<=","rhs":100}
+      ]
+    }
+  }
+}
+```
+
+Every variable must appear exactly once in the objective and each constraint. IDs begin with a letter and contain only letters, numbers, or underscores. `axis_variables` selects the two graph axes; any other variables become learner-controlled fixed parameters for the 2D slice. The complete demo definition is in `tella_backend/content/demo/lpp_workspace.json`.
+
+`app_name` can select the appropriate GeoGebra app, including `graphing` or `3d`. The wrapper scales down on narrow screens; authors must also design the GeoGebra material itself for touch input and small screens. Prefer a 2D representation as the default when the learning objective does not require 3D.
+
+Only objects named in `watch_objects`, `progress_object`, or `completion.object` are read. Completion operators are `equals`, `not_equals`, `greater_than`, `greater_than_or_equal`, `less_than`, `less_than_or_equal`, and `truthy`. The student UI shows completion only after Django confirms the progress write.
+
+#### Placeholder
+
+Use this for a planned experiment whose interactive definition is not ready. All displayed text still comes from the admin record:
+
+```json
+{
+  "schema_version": 1,
+  "renderer": "placeholder",
+  "renderer_config": {
+    "heading": "<admin-authored heading>",
+    "message": "<admin-authored placeholder message>",
+    "note": "<optional admin-authored note>"
+  }
+}
+```
+
+The experience is online-required: Moodle must exchange a valid learner token and load the published activity from Django. If connectivity drops after loading, progress events are queued briefly in the browser and sent on reconnection; this resilience does not make the lesson an offline product. AI features can consume tracked state later, but neither rendering nor mathematical correctness depends on an AI response.
+
 ## 5. Create questions and assessments
+
+Next.js: `/assessments`.
 
 ### 5.1 Question bank
 
@@ -227,7 +354,7 @@ Create a check for a chapter:
 }
 ```
 
-Link questions using `POST /api/v1/learning-check-questions/` through the model/admin workflow. Publish the check only after its questions are complete. Students can then start, submit, and view their own results through `/learning-checks/{id}/start/`, `/submit/`, and `/results/`.
+Link questions in the Learning-check questions workspace or with `POST /api/v1/learning-check-questions/`. Publish the check only after its questions are complete. Students can then start, submit, and view their own results through `/learning-checks/{id}/start/`, `/submit/`, and `/results/`.
 
 Case studies follow the same pattern with `/case-studies/` and `/case-study-questions/`.
 
@@ -249,6 +376,8 @@ curl -X POST "http://127.0.0.1:8000/api/v1/courses/<course-uuid>/publish/" \
 The service requires a published parent Program and at least one Chapter, then marks the selected version and parent Course published. Students cannot see drafts.
 
 ## 7. Create cohorts, assignments, and enrollments
+
+Next.js: `/learners`.
 
 Create a StudentGroup (not a Django Group):
 

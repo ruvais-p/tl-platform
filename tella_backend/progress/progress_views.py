@@ -28,6 +28,18 @@ class MyProgressView(APIView):
         return Response(CourseProgressSerializer(rows, many=True).data)
 
 
+class MyActivityProgressListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        rows = ActivityProgress.objects.filter(
+            enrollment__in=active_enrollments(request.user),
+        ).select_related("activity", "enrollment__course")
+        if course_id := request.query_params.get("course"):
+            rows = rows.filter(enrollment__course_id=course_id)
+        return Response(ActivityProgressSerializer(rows.order_by("-last_accessed_at"), many=True).data)
+
+
 class MyCourseProgressView(APIView):
     permission_classes = [IsAuthenticated]
 

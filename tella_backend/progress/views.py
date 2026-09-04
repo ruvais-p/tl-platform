@@ -5,10 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets
 
+from accounts.constants import GroupName
+from accounts.permissions import HasModelPermission
 from curriculum.models import LearningActivity
 from .models import (
     ActivityProgress,
+    AssessmentAttempt,
     BadgeAward,
     CareerOpportunity,
     PointEvent,
@@ -20,6 +24,11 @@ from .serializers import (
     CareerOpportunitySerializer,
     PointEventSerializer,
     ProgressUpsertSerializer,
+    StaffActivityProgressSerializer,
+    StaffBadgeAwardSerializer,
+    StaffCareerOpportunitySerializer,
+    StaffLegacyAssessmentAttemptSerializer,
+    StaffPointEventSerializer,
 )
 from .services import ProgressService
 
@@ -159,3 +168,53 @@ class CareerOpportunityListView(APIView):
     def get(self, request):
         qs = CareerOpportunity.objects.filter(is_published=True)
         return Response(CareerOpportunitySerializer(qs, many=True).data)
+
+
+def visible_staff_activity_progress(user):
+    queryset = ActivityProgress.objects.select_related(
+        "enrollment__student", "enrollment__course", "activity"
+    )
+    if user.has_perm("progress.view_all_student_progress"):
+        return queryset
+    if user.has_perm("progress.view_assigned_student_progress"):
+        return queryset.filter(
+            enrollment__student__student_group_memberships__student_group__teacher=user
+        ).distinct()
+    if user.groups.filter(name=GroupName.STUDENT).exists():
+        return queryset.filter(enrollment__student=user)
+    return queryset.none()
+
+
+class ActivityProgressStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ActivityProgress.objects.all()
+    serializer_class = StaffActivityProgressSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]
+
+    def get_queryset(self):
+        return visible_staff_activity_progress(self.request.user).order_by(
+            "-updated_at"
+        )
+
+
+class PointEventStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PointEvent.objects.select_related("user", "activity")
+    serializer_class = StaffPointEventSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]
+
+
+class BadgeAwardStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = BadgeAward.objects.select_related("user", "activity")
+    serializer_class = StaffBadgeAwardSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]
+
+
+class CareerOpportunityStaffViewSet(viewsets.ModelViewSet):
+    queryset = CareerOpportunity.objects.all()
+    serializer_class = StaffCareerOpportunitySerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]
+
+
+class LegacyAssessmentAttemptStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AssessmentAttempt.objects.select_related("user", "activity")
+    serializer_class = StaffLegacyAssessmentAttemptSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]

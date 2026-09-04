@@ -21,11 +21,26 @@ from workshops.models import WorkshopConfig, WorkshopModel
 class Command(BaseCommand):
     help = "Seed roles, demo users, and the bakery multivariable workshop."
 
+    @staticmethod
+    def configure_demo_user(user, password, *, is_staff=False, is_superuser=False):
+        update_fields = []
+        if not user.check_password(password):
+            user.set_password(password)
+            update_fields.append("password")
+        if user.is_staff != is_staff:
+            user.is_staff = is_staff
+            update_fields.append("is_staff")
+        if user.is_superuser != is_superuser:
+            user.is_superuser = is_superuser
+            update_fields.append("is_superuser")
+        if update_fields:
+            user.save(update_fields=update_fields)
+
     @transaction.atomic
     def handle(self, *args, **options):
         groups = {name: Group.objects.get_or_create(name=name)[0] for name in GroupName.values}
 
-        admin, created = User.objects.get_or_create(
+        admin, _ = User.objects.get_or_create(
             email="admin@example.com",
             defaults={
                 "username": "admin",
@@ -35,14 +50,10 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
-        if created or not admin.check_password("Admin123!"):
-            admin.set_password("Admin123!")
-            admin.is_staff = True
-            admin.is_superuser = True
-            admin.save()
-        admin.groups.add(groups[GroupName.SUPER_ADMIN], groups[GroupName.ADMIN])
+        self.configure_demo_user(admin, "Admin123!", is_staff=True, is_superuser=True)
+        admin.groups.set([groups[GroupName.SUPER_ADMIN], groups[GroupName.ADMIN]])
 
-        manager, created = User.objects.get_or_create(
+        manager, _ = User.objects.get_or_create(
             email="content@example.com",
             defaults={
                 "username": "content-manager",
@@ -51,11 +62,19 @@ class Command(BaseCommand):
                 "is_staff": True,
             },
         )
-        if created:
-            manager.set_password("Admin123!")
-            manager.is_staff = True
-            manager.save()
-        manager.groups.add(groups[GroupName.CONTENT_MANAGER])
+        self.configure_demo_user(manager, "Content123!", is_staff=True)
+        manager.groups.set([groups[GroupName.CONTENT_MANAGER]])
+
+        student, _ = User.objects.get_or_create(
+            email="student@example.com",
+            defaults={
+                "username": "student",
+                "first_name": "Demo",
+                "last_name": "Student",
+            },
+        )
+        self.configure_demo_user(student, "Student123!")
+        student.groups.set([groups[GroupName.STUDENT]])
 
         program, _ = Program.objects.get_or_create(
             code="business-mathematics-skill-path",
@@ -143,8 +162,17 @@ class Command(BaseCommand):
             defaults={"config": sample},
         )
 
-        Enrollment.objects.get_or_create(student=admin, course=course, defaults={"course_version": version})
-        Enrollment.objects.get_or_create(student=manager, course=course, defaults={"course_version": version})
+        enrollment = Enrollment.objects.filter(
+            student=student,
+            course=course,
+            status=Enrollment.Status.ACTIVE,
+        ).first()
+        if enrollment:
+            if enrollment.course_version_id != version.id:
+                enrollment.course_version = version
+                enrollment.save(update_fields=["course_version", "updated_at"])
+        else:
+            Enrollment.objects.create(student=student, course=course, course_version=version)
 
         CareerOpportunity.objects.get_or_create(
             title="Bakery operations internship",
@@ -167,3 +195,5 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Seeded workshop activity {activity.id}"))
         self.stdout.write(f"Course id: {course.id}")
         self.stdout.write("Admin login: admin@example.com / Admin123!")
+        self.stdout.write("Content manager login: content@example.com / Content123!")
+        self.stdout.write("Student login: student@example.com / Student123!")

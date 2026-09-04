@@ -1,8 +1,13 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from .models import WorkshopModel
-from .serializers import WorkshopModelSerializer
+from accounts.permissions import HasModelPermission
+
+from .models import WorkshopConfig, WorkshopModel
+from .serializers import (
+    StaffWorkshopModelSerializer, WorkshopConfigSerializer,
+    WorkshopModelSerializer,
+)
 
 
 class WorkshopModelViewSet(viewsets.ModelViewSet):
@@ -19,3 +24,15 @@ class WorkshopModelViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class WorkshopConfigViewSet(viewsets.ModelViewSet):
+    queryset = WorkshopConfig.objects.select_related("activity")
+    serializer_class = WorkshopConfigSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]
+
+
+class StaffWorkshopModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WorkshopModel.objects.select_related("user", "activity")
+    serializer_class = StaffWorkshopModelSerializer
+    permission_classes = [IsAuthenticated, HasModelPermission]

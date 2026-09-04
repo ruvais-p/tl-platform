@@ -12,10 +12,10 @@ export async function POST(request: Request) {
   await setSession(tokens);
   const me = await fetch(`${getApiBaseUrl()}/auth/me/`, { headers: { authorization: `Bearer ${tokens.access}` }, cache: "no-store" });
   if (!me.ok) { await clearSession(); return forwardResponse(me); }
-  const user = await me.json() as { groups?: string[] };
-  if (!user.groups?.some(group => ADMIN_GROUPS.has(group))) {
+  const user = await me.json() as { groups?: string[]; is_superuser?: boolean };
+  if (!user.is_superuser && !user.groups?.some(group => ADMIN_GROUPS.has(group))) {
     await clearSession();
-    return Response.json({ detail: "This account does not have access to curriculum administration." }, { status: 403 });
+    return Response.json({ detail: "This account does not have access to the staff workspace." }, { status: 403 });
   }
   return Response.json({ ok: true });
 }

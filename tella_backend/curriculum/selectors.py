@@ -26,7 +26,7 @@ def accessible_courses(user) -> QuerySet[Course]:
 
 def course_structure_queryset(user) -> QuerySet[Course]:
     published_only = is_student(user)
-    activities = LearningActivity.objects.select_related("content", "workshop_config").order_by("display_order")
+    activities = LearningActivity.objects.select_related("content", "experiment").order_by("display_order")
     subtopics = Subtopic.objects.order_by("display_order")
     chapters = Chapter.objects.order_by("display_order")
     versions = CourseVersion.objects.order_by("-version_number")
@@ -62,7 +62,7 @@ def accessible_subtopics(user) -> QuerySet[Subtopic]:
 
 def accessible_activities(user) -> QuerySet[LearningActivity]:
     queryset = LearningActivity.objects.select_related(
-        "subtopic__chapter__course_version__course", "content", "workshop_config"
+        "subtopic__chapter__course_version__course", "content", "experiment"
     )
     if is_student(user):
         queryset = queryset.filter(subtopic_id__in=accessible_subtopics(user).values("id"), status=PublishStatus.PUBLISHED)

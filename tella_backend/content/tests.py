@@ -1,7 +1,11 @@
+import json
 import uuid
+import tempfile
+from pathlib import Path
 
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -16,6 +20,11 @@ from students.models import Enrollment
 
 from .models import ActivityContent, Experiment, PracticeItem, PracticeSet, Video
 from .services import create_experiment, create_video, reorder_practice_items
+
+
+def multivariable_demo_configuration():
+    definition = Path(__file__).resolve().parent / "demo" / "multivariable_profit_workspace.json"
+    return json.loads(definition.read_text(encoding="utf-8"))
 
 
 class ContentFixtureMixin:
@@ -81,6 +90,26 @@ class ContentApiTests(ContentFixtureMixin, TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["uploaded_by"], self.manager.id)
 
+    def test_content_manager_can_upload_media_and_receive_a_playable_url(self):
+        self.client.force_authenticate(self.manager)
+        with tempfile.TemporaryDirectory() as media_root, self.settings(MEDIA_ROOT=media_root):
+            response = self.client.post(reverse("media-asset-list"), {
+                "upload": SimpleUploadedFile("lesson video.mp4", b"demo-video-bytes", content_type="video/mp4"),
+                "duration_seconds": 42,
+                "storage_path": "untrusted/override.mp4",
+                "file_type": "DOCUMENT",
+                "status": "FAILED",
+            }, format="multipart")
+
+            self.assertEqual(response.status_code, 201, response.data)
+            self.assertEqual(response.data["file_name"], "lesson video.mp4")
+            self.assertEqual(response.data["file_type"], "VIDEO")
+            self.assertEqual(response.data["mime_type"], "video/mp4")
+            self.assertEqual(response.data["status"], "READY")
+            self.assertTrue(response.data["storage_path"].startswith("uploads/"))
+            self.assertIn("/media/uploads/", response.data["public_url"])
+            self.assertTrue(Path(media_root, response.data["storage_path"]).is_file())
+
     def test_content_manager_can_create_and_patch_activity_content(self):
         self.client.force_authenticate(self.manager)
         created = self.client.post(reverse("activity-content-list"), {
@@ -95,6 +124,176 @@ class ContentApiTests(ContentFixtureMixin, TestCase):
         self.assertEqual(updated.status_code, 200)
         self.assertEqual(updated.data["content"]["title"], "Updated")
         self.assertTrue(updated.data["content"]["extra"]["preserved"])
+
+    def test_experiment_definition_round_trips_extension_fields(self):
+        self.client.force_authenticate(self.manager)
+        configuration = {
+            "schema_version": 1,
+            "renderer": "geogebra",
+            "renderer_config": {
+                "material_id": "admin-supplied-material",
+                "app_name": "graphing",
+                "parameters": {"showToolBar": False},
+            },
+            "tracking": {
+                "watch_objects": ["x", "y"],
+                "completion": {"object": "done", "operator": "equals", "value": 1},
+            },
+            "future_extension": {"preserved": True},
+        }
+
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.EMBEDDED,
+            "instructions": "Follow the admin-authored instructions.",
+            "configuration": configuration,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["configuration"], configuration)
+
+    def test_geogebra_definition_requires_material_or_supported_workspace(self):
+        self.client.force_authenticate(self.manager)
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.EMBEDDED,
+            "instructions": "Instructions",
+            "configuration": {
+                "schema_version": 1,
+                "renderer": "geogebra",
+                "renderer_config": {},
+            },
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("material_id", str(response.data["configuration"][0]))
+
+    def test_content_manager_can_post_data_driven_lpp_workspace(self):
+        self.client.force_authenticate(self.manager)
+        configuration = {
+            "schema_version": 1,
+            "renderer": "geogebra",
+            "renderer_config": {
+                "app_name": "graphing",
+                "workspace": {
+                    "type": "linear_programming",
+                    "title": "LP model formulation",
+                    "problem_statement": "Choose a profitable production mix.",
+                    "axis_variables": ["x1", "x2"],
+                    "variables": [
+                        {"id": "x1", "label": "Product A", "symbol": "x1", "unit": "units", "min": 20, "max": 50, "initial": 20, "step": 1},
+                        {"id": "x2", "label": "Product B", "symbol": "x2", "unit": "units", "min": 0, "max": 25, "initial": 5, "step": 1},
+                        {"id": "x3", "label": "Product C", "symbol": "x3", "unit": "units", "min": 0, "max": 30, "initial": 10, "step": 1},
+                    ],
+                    "objective": {
+                        "label": "Profit", "sense": "maximize", "currency": "₹",
+                        "coefficients": {"x1": 12, "x2": 20, "x3": 45},
+                    },
+                    "constraints": [
+                        {"id": "labour", "label": "Assembly time", "coefficients": {"x1": 0.8, "x2": 1.7, "x3": 2.5}, "operator": "<=", "rhs": 100},
+                        {"id": "commitment", "label": "Combined commitment", "coefficients": {"x1": 0, "x2": 1, "x3": 1}, "operator": ">=", "rhs": 15},
+                    ],
+                },
+            },
+        }
+
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.EMBEDDED,
+            "instructions": "Change the values and calculate the feasible region.",
+            "configuration": configuration,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["configuration"], configuration)
+
+    def test_content_manager_can_post_data_driven_multivariable_workspace(self):
+        self.client.force_authenticate(self.manager)
+        configuration = multivariable_demo_configuration()
+
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.SIMULATION,
+            "instructions": "Explore the profit hill and explain your recommendation.",
+            "configuration": configuration,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(
+            response.data["configuration"]["renderer_config"]["workspace"]["type"],
+            "multivariable_profit",
+        )
+        self.assertEqual(
+            response.data["configuration"]["renderer_config"]["workspace"]["steps"][1]["kind"],
+            "slope",
+        )
+
+    def test_multivariable_workspace_rejects_a_model_without_one_peak(self):
+        self.client.force_authenticate(self.manager)
+        configuration = multivariable_demo_configuration()
+        configuration["renderer_config"]["workspace"]["cross_effect"] = 1
+
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.SIMULATION,
+            "instructions": "Instructions",
+            "configuration": configuration,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("concave profit hill", str(response.data["configuration"][0]))
+
+    def test_lpp_workspace_rejects_missing_coefficients(self):
+        self.client.force_authenticate(self.manager)
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.EMBEDDED,
+            "instructions": "Instructions",
+            "configuration": {
+                "schema_version": 1,
+                "renderer": "geogebra",
+                "renderer_config": {
+                    "workspace": {
+                        "type": "linear_programming",
+                        "axis_variables": ["x1", "x2"],
+                        "variables": [
+                            {"id": "x1", "min": 0, "max": 10, "initial": 0},
+                            {"id": "x2", "min": 0, "max": 10, "initial": 0},
+                        ],
+                        "objective": {"sense": "maximize", "coefficients": {"x1": 1}},
+                        "constraints": [
+                            {"id": "capacity", "coefficients": {"x1": 1, "x2": 1}, "operator": "<=", "rhs": 10},
+                        ],
+                    },
+                },
+            },
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("every variable", str(response.data["configuration"][0]))
+
+    def test_experiment_definition_rejects_non_string_renderer(self):
+        self.client.force_authenticate(self.manager)
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.EMBEDDED,
+            "instructions": "Instructions",
+            "configuration": {"schema_version": 1, "renderer": {"unexpected": True}},
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("renderer", str(response.data["configuration"][0]))
+
+    def test_legacy_question_configuration_remains_valid(self):
+        self.client.force_authenticate(self.manager)
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.QUESTION_BASED,
+            "instructions": "Instructions",
+            "configuration": {"response_fields": [{"key": "answer"}]},
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201)
 
     def test_student_cannot_create_or_patch_activity_content(self):
         record = ActivityContent.objects.create(activity=self.experiment_activity, content={"title": "Original"})

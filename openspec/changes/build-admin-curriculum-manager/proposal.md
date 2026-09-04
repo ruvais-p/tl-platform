@@ -1,6 +1,6 @@
 ## Why
 
-Administrators and content managers currently have API endpoints and a basic Django portal, but no simple workspace for understanding and editing a course as one hierarchy. A focused Next.js curriculum manager will let authorized staff create, organize, review, and publish course content without manually coordinating UUIDs across separate resource forms.
+Administrators and content managers have API endpoints, but need a simple workspace for understanding and editing a course as one hierarchy. A focused Next.js curriculum manager lets authorized staff create, organize, review, and publish course content without manually coordinating UUIDs across separate resource forms.
 
 ## What Changes
 
@@ -28,4 +28,4 @@ None.
 - `tella_backend/content`: activity-content lookup/representation required for reliable edits from the curriculum editor.
 - `tella_backend/curriculum`: nested activity representation may expose the associated content record while preserving existing write boundaries.
 - Runtime configuration: the Next.js application needs a Django API base URL; authentication must preserve existing JWT rotation and authorization behavior.
-- No breaking API changes are intended. Existing Moodle and Django portal clients remain supported.
+- No breaking API changes are intended. Existing Moodle and API clients remain supported.

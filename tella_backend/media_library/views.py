@@ -7,7 +7,7 @@ from curriculum.selectors import accessible_activities, accessible_courses, is_s
 from .models import MediaAsset
 from .permissions import CanManageMedia
 from .serializers import MediaAssetSerializer
-from .services import create_media_asset
+from .services import create_media_asset, create_uploaded_media_asset
 
 
 class MediaAssetViewSet(viewsets.ModelViewSet):
@@ -26,4 +26,11 @@ class MediaAssetViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.instance = create_media_asset(actor=self.request.user, **serializer.validated_data)
+        data = dict(serializer.validated_data)
+        uploaded_file = data.pop("upload", None)
+        if uploaded_file:
+            serializer.instance = create_uploaded_media_asset(
+                actor=self.request.user, uploaded_file=uploaded_file, **data
+            )
+        else:
+            serializer.instance = create_media_asset(actor=self.request.user, **data)

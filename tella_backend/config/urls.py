@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -12,13 +11,24 @@ from curriculum.views import (
 from content.views import ActivityContentViewSet, ExperimentViewSet, PracticeItemViewSet, PracticeSetViewSet, VideoViewSet
 from media_library.views import MediaAssetViewSet
 from progress.views import ActivityProgressActionView, CareerOpportunityListView, GamificationMeView, ProgressUpsertView
-from progress.progress_views import MyActivityProgressView, MyChapterProgressView, MyCourseProgressView, MyProgressView
-from assessments.views import CaseStudyQuestionViewSet, CaseStudyViewSet, LearningCheckViewSet, QuestionOptionViewSet, QuestionViewSet
+from progress.views import (
+    ActivityProgressStaffViewSet, BadgeAwardStaffViewSet,
+    CareerOpportunityStaffViewSet, LegacyAssessmentAttemptStaffViewSet,
+    PointEventStaffViewSet,
+)
+from progress.progress_views import MyActivityProgressListView, MyActivityProgressView, MyChapterProgressView, MyCourseProgressView, MyProgressView
+from assessments.views import (
+    AssessmentAnswerStaffViewSet, AssessmentAttemptStaffViewSet,
+    CaseStudyQuestionViewSet, CaseStudyViewSet, LearningCheckQuestionViewSet,
+    LearningCheckViewSet, QuestionOptionViewSet, QuestionViewSet,
+)
 from students.views import (
     CourseAssignmentViewSet, EnrollmentViewSet, ExternalUserMappingViewSet,
     StudentGroupMemberViewSet, StudentGroupViewSet, StudentViewSet, TeacherViewSet,
 )
-from workshops.views import WorkshopModelViewSet
+from workshops.views import (
+    StaffWorkshopModelViewSet, WorkshopConfigViewSet, WorkshopModelViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"programs", ProgramViewSet, basename="program")
@@ -45,16 +55,25 @@ router.register(r"question-options", QuestionOptionViewSet, basename="question-o
 router.register(r"case-studies", CaseStudyViewSet, basename="case-study")
 router.register(r"case-study-questions", CaseStudyQuestionViewSet, basename="case-study-question")
 router.register(r"learning-checks", LearningCheckViewSet, basename="learning-check")
+router.register(r"learning-check-questions", LearningCheckQuestionViewSet, basename="learning-check-question")
 router.register(r"workshop-models", WorkshopModelViewSet, basename="workshop-model")
+router.register(r"activity-progress-records", ActivityProgressStaffViewSet, basename="activity-progress-record")
+router.register(r"assessment-attempts", AssessmentAttemptStaffViewSet, basename="assessment-attempt")
+router.register(r"assessment-answers", AssessmentAnswerStaffViewSet, basename="assessment-answer")
+router.register(r"point-events", PointEventStaffViewSet, basename="point-event")
+router.register(r"badge-awards", BadgeAwardStaffViewSet, basename="badge-award")
+router.register(r"career-opportunities", CareerOpportunityStaffViewSet, basename="career-opportunity")
+router.register(r"legacy-assessment-attempts", LegacyAssessmentAttemptStaffViewSet, basename="legacy-assessment-attempt")
+router.register(r"workshop-configs", WorkshopConfigViewSet, basename="workshop-config")
+router.register(r"staff-workshop-models", StaffWorkshopModelViewSet, basename="staff-workshop-model")
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("manage/", include("portal.urls")),
     path("api/v1/auth/", include("accounts.urls")),
     path("api/v1/", include(router.urls)),
     path("api/v1/progress/", ProgressUpsertView.as_view(), name="progress_upsert"),
     path("api/v1/activities/<uuid:activity_id>/<str:action>/", ActivityProgressActionView.as_view(), name="activity_progress_action"),
     path("api/v1/me/progress/", MyProgressView.as_view(), name="my_progress"),
+    path("api/v1/me/activity-progress/", MyActivityProgressListView.as_view(), name="my_activity_progress_list"),
     path("api/v1/me/courses/<uuid:course_id>/progress/", MyCourseProgressView.as_view(), name="my_course_progress"),
     path("api/v1/me/chapters/<uuid:chapter_id>/progress/", MyChapterProgressView.as_view(), name="my_chapter_progress"),
     path("api/v1/me/activities/<uuid:activity_id>/progress/", MyActivityProgressView.as_view(), name="my_activity_progress"),

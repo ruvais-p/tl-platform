@@ -1,4 +1,4 @@
-const COLLECTIONS = ["programs", "courses", "course-versions", "chapters", "subtopics", "activities", "activity-content"];
+const COLLECTIONS = ["programs", "courses", "course-versions", "chapters", "subtopics", "activities", "activity-content", "experiments"];
 const UUID = "[0-9a-fA-F-]{36}";
 
 export function isAllowedProxyRequest(method: string, path: string) {

@@ -26,9 +26,14 @@ def create_video(*, actor, **data):
 
 def create_experiment(*, actor, **data):
     _require(actor, Experiment)
-    allowed = {LearningActivity.ActivityType.EXPERIMENT, LearningActivity.ActivityType.SIMULATION, LearningActivity.ActivityType.INTERACTIVE}
+    allowed = {
+        LearningActivity.ActivityType.EXPERIMENT,
+        LearningActivity.ActivityType.SIMULATION,
+        LearningActivity.ActivityType.INTERACTIVE,
+        LearningActivity.ActivityType.INTERACTIVE_WORKSHOP,
+    }
     if data["activity"].activity_type not in allowed:
-        raise ValidationError("Experiment content requires an experiment, simulation, or interactive activity.")
+        raise ValidationError("Experiment content requires an experiment, simulation, interactive, or interactive workshop activity.")
     return Experiment.objects.create(**data)
 
 

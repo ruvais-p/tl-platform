@@ -58,4 +58,43 @@ describe("admin session", () => {
     expect((await djangoRequest("auth/me/")).status).toBe(401);
     expect(values.size).toBe(0);
   });
+
+  it("accepts a Django superuser without requiring a role assignment", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
+      .mockResolvedValueOnce(Response.json({ groups: [], is_superuser: true })));
+    const { POST } = await import("@/app/api/auth/login/route");
+    const response = await POST(new Request("http://admin/api/auth/login", { method: "POST", body: "{}" }));
+    expect(response.status).toBe(200);
+    expect(values.get("tella_admin_access")).toBe("access");
+  });
+
+  it("keeps learner tokens separate from the administration session", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(Response.json({ access: "learner-access", refresh: "learner-refresh" }))
+      .mockResolvedValueOnce(Response.json({ groups: ["STUDENT"] })));
+    const { POST } = await import("@/app/api/learner/auth/login/route");
+
+    const response = await POST(new Request("http://tella/api/learner/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email: "learner@example.com", password: "secret" }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(values.get("tella_learner_access")).toBe("learner-access");
+    expect(values.get("tella_learner_refresh")).toBe("learner-refresh");
+    expect(values.has("tella_admin_access")).toBe(false);
+  });
+
+  it("rejects a valid account without the student role from the learner workspace", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
+      .mockResolvedValueOnce(Response.json({ groups: ["CONTENT_MANAGER"] })));
+    const { POST } = await import("@/app/api/learner/auth/login/route");
+
+    const response = await POST(new Request("http://tella/api/learner/auth/login", { method: "POST", body: "{}" }));
+
+    expect(response.status).toBe(403);
+    expect(values.size).toBe(0);
+  });
 });

@@ -18,7 +18,7 @@ The maintained endpoint and payload reference is [docs/API.md](../docs/API.md). 
 - `students/`: cohorts, memberships, versioned enrollments, course assignments, and LMS mappings
 - `progress/`: transactional activity progress with persisted subtopic, chapter, and course snapshots
 - `assessments/`: reusable questions, learning checks, case studies, attempts, and server-side scoring
-- `portal/` and `templates/admin_portal/`: permission-driven Django Template management portal at `/manage/`
+- `config/urls.py`: versioned, JSON-only REST endpoints under `/api/v1/`, with no HTML routes
 
 The access-control groups are `SUPER_ADMIN`, `ADMIN`, `ACADEMIC_MANAGER`, `CONTENT_MANAGER`, `TEACHER`, and `STUDENT`. These are Django authentication Groups. Classroom cohorts use the separate `students.StudentGroup` model.
 
@@ -44,6 +44,7 @@ python manage.py createsuperuser
 ```
 
 `setup_groups` is safe to run repeatedly. It resolves permissions by `app_label.codename`, never database IDs, and synchronizes each group's permissions.
+The user created by `createsuperuser` can sign in directly to the Next.js staff workspace; Django does not expose an `/admin/` frontend.
 
 ## Run and test
 
@@ -67,6 +68,9 @@ All public APIs are versioned under `/api/v1/`:
 - `POST /api/v1/auth/refresh/` with `refresh`
 - `POST /api/v1/auth/logout/` with a Bearer access token and `refresh`
 - `GET /api/v1/auth/me/` with a Bearer access token
+- `GET`/`POST /api/v1/auth/users/` and `GET`/`PATCH /api/v1/auth/users/{id}/` for guarded staff account management
+- `GET /api/v1/auth/groups/`; permission administrators may `PATCH /api/v1/auth/groups/{id}/permissions/`
+- `GET /api/v1/auth/permissions/` for the permission-management catalog
 
 Access tokens default to 15 minutes. Refresh tokens default to seven days, rotate on refresh, and are blacklisted after rotation or logout. `/auth/me/` returns Django Groups and effective permissions.
 
@@ -74,7 +78,7 @@ Access tokens default to 15 minutes. Refresh tokens default to seven days, rotat
 
 API views perform authentication and coarse permission checks. Serializers validate input. Services enforce sensitive business rules and use transactions. Selectors own scoped reads. Teachers only see students connected through an assigned StudentGroup, and student content access requires an active, unexpired enrollment for the exact CourseVersion.
 
-Normal administrators receive `manage_users` but not `manage_permissions`. The account service rejects assignment of `SUPER_ADMIN` without permission-management authority and rejects non-superuser self-escalation.
+Normal administrators receive `manage_users` but not `manage_permissions`. The account service rejects assignment of `SUPER_ADMIN`, changes to protected accounts, and non-superuser self-escalation without permission-management authority.
 
 ## Redis, Celery, storage, and Moodle
 

@@ -1,10 +1,11 @@
 from collections import defaultdict
 
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from accounts.constants import GroupName
+from accounts.permissions import active_permission_queryset
 
 
 PERMISSIONS_BY_GROUP = {
@@ -102,7 +103,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        all_permissions = Permission.objects.select_related("content_type").all()
+        all_permissions = active_permission_queryset().select_related("content_type")
         permission_map = {
             f"{permission.content_type.app_label}.{permission.codename}": permission
             for permission in all_permissions
@@ -114,7 +115,7 @@ class Command(BaseCommand):
             resolved = [permission_map[key] for key in requested if key in permission_map]
             missing[name].extend(sorted(requested - permission_map.keys()))
             group.permissions.set(resolved)
-            self.stdout.write(self.style.SUCCESS(f"✓ {name}"))
+            self.stdout.write(self.style.SUCCESS(f"[OK] {name}"))
             self.stdout.write(f"  {len(resolved)} permissions")
         for name, keys in missing.items():
             if keys:

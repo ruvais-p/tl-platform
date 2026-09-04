@@ -27,7 +27,7 @@ from workshops.math import (
     slope_y,
     validate_config,
 )
-from workshops.models import WorkshopModel
+from workshops.models import WorkshopConfig, WorkshopModel
 
 
 class MathLayerTests(SimpleTestCase):
@@ -128,3 +128,31 @@ class WorkshopModelApiTests(TestCase):
         self.assertEqual(response.data["name"], "Course")
         chapters = response.data["published_version"]["chapters"]
         self.assertEqual(chapters[0]["subtopics"][0]["activities"][0]["title"], "Workshop")
+
+    def test_super_admin_can_manage_config_and_review_saved_models(self):
+        super_admin = User.objects.create_user(
+            email="workshop-admin@example.com", password="StrongPass123!"
+        )
+        super_admin.groups.add(Group.objects.get(name=GroupName.SUPER_ADMIN))
+        client = APIClient()
+        client.force_authenticate(super_admin)
+
+        payload = {
+            "activity": str(self.activity.id),
+            "name": SAMPLE_BAKERY["name"],
+            "price1": SAMPLE_BAKERY["price1"],
+            "price_drop1": SAMPLE_BAKERY["priceDrop1"],
+            "cost1": SAMPLE_BAKERY["cost1"],
+            "price2": SAMPLE_BAKERY["price2"],
+            "price_drop2": SAMPLE_BAKERY["priceDrop2"],
+            "cost2": SAMPLE_BAKERY["cost2"],
+            "congestion": SAMPLE_BAKERY["congestion"],
+            "fixed_cost": SAMPLE_BAKERY["fixedCost"],
+            "current_x": SAMPLE_BAKERY["currentX"],
+            "current_y": SAMPLE_BAKERY["currentY"],
+        }
+        response = client.post("/api/v1/workshop-configs/", payload, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertTrue(WorkshopConfig.objects.filter(activity=self.activity).exists())
+        self.assertEqual(client.get("/api/v1/staff-workshop-models/").status_code, 200)

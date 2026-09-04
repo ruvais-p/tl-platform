@@ -7,11 +7,16 @@ from accounts.constants import GroupName
 from students.models import Enrollment
 from .permissions import AssessmentPermission
 
-from .models import CaseStudy, CaseStudyQuestion, LearningCheck, LearningCheckQuestion, Question, QuestionOption
+from .models import (
+    AssessmentAnswer, AssessmentAttempt, CaseStudy, CaseStudyQuestion,
+    LearningCheck, LearningCheckQuestion, Question, QuestionOption,
+)
 from .serializers import (
     AssessmentAttemptSerializer, CaseStudyQuestionSerializer, CaseStudySerializer,
     LearningCheckQuestionSerializer, LearningCheckSerializer, QuestionOptionSerializer,
-    QuestionSerializer, SubmitAttemptSerializer,
+    QuestionSerializer, StaffAssessmentAnswerSerializer,
+    StaffAssessmentAttemptSerializer, StudentLearningCheckSerializer,
+    SubmitAttemptSerializer,
 )
 from .services import AssessmentService
 
@@ -44,6 +49,16 @@ class LearningCheckViewSet(viewsets.ModelViewSet):
     queryset = LearningCheck.objects.prefetch_related("questions__question__options").all()
     serializer_class = LearningCheckSerializer
     permission_classes = [AssessmentPermission]
+
+    def get_serializer_class(self):
+        request_user = getattr(self.request, "user", None)
+        if (
+            request_user
+            and request_user.groups.filter(name=GroupName.STUDENT).exists()
+            and not request_user.is_superuser
+        ):
+            return StudentLearningCheckSerializer
+        return super().get_serializer_class()
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -83,3 +98,44 @@ class LearningCheckViewSet(viewsets.ModelViewSet):
         from .models import AssessmentAttempt
         attempts = AssessmentAttempt.objects.filter(student=request.user, learning_check=self.get_object()).order_by("attempt_number")
         return Response(AssessmentAttemptSerializer(attempts, many=True).data)
+
+
+class LearningCheckQuestionViewSet(viewsets.ModelViewSet):
+    queryset = LearningCheckQuestion.objects.select_related("learning_check", "question").all()
+    serializer_class = LearningCheckQuestionSerializer
+    permission_classes = [AssessmentPermission]
+
+
+def visible_staff_attempts(user):
+    queryset = AssessmentAttempt.objects.select_related(
+        "student", "learning_check__chapter__course_version__course"
+    )
+    if user.has_perm("progress.view_all_student_progress"):
+        return queryset
+    if user.has_perm("progress.view_assigned_student_progress"):
+        return queryset.filter(
+            student__student_group_memberships__student_group__teacher=user
+        ).distinct()
+    if user.groups.filter(name=GroupName.STUDENT).exists():
+        return queryset.filter(student=user)
+    return queryset.none()
+
+
+class AssessmentAttemptStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AssessmentAttempt.objects.all()
+    serializer_class = StaffAssessmentAttemptSerializer
+    permission_classes = [AssessmentPermission]
+
+    def get_queryset(self):
+        return visible_staff_attempts(self.request.user).order_by("-started_at")
+
+
+class AssessmentAnswerStaffViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AssessmentAnswer.objects.all()
+    serializer_class = StaffAssessmentAnswerSerializer
+    permission_classes = [AssessmentPermission]
+
+    def get_queryset(self):
+        return AssessmentAnswer.objects.filter(
+            attempt__in=visible_staff_attempts(self.request.user)
+        ).select_related("attempt__student", "question").order_by("-answered_at")
