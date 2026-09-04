@@ -12,6 +12,7 @@ const json = (value: unknown) => JSON.stringify(value);
 export const authApi = { me: () => request<User>("auth/me"), login: (email: string, password: string) => request<{ok:true}>("auth/login", { method:"POST", body:json({email,password}) }), logout: () => request<void>("auth/logout", {method:"POST"}) };
 export const curriculumApi = {
   programs: () => request<Program[]>("curriculum/programs"), courses: () => request<Course[]>("curriculum/courses"), course: (id: UUID) => request<Course>(`curriculum/courses/${id}`),
+  createProgram: (data: Partial<Program>) => request<Program>("curriculum/programs", {method:"POST",body:json(data)}),
   createCourse: (data: Partial<Course>) => request<Course>("curriculum/courses", {method:"POST",body:json(data)}),
   createVersion: (data: Partial<CourseVersion>) => request<CourseVersion>("curriculum/course-versions", {method:"POST",body:json(data)}),
   createChapter: (data: Partial<Chapter>) => request<Chapter>("curriculum/chapters", {method:"POST",body:json(data)}),

@@ -6,6 +6,23 @@ if ($uri !== '/' && is_file($full)) {
     return false;
 }
 
+// PHP's development server does not resolve directory index files after the
+// request has fallen through to this router. Route paths such as /my/ and
+// /login/ to their own index.php instead of Moodle's site-root index.php.
+if ($uri !== '/' && is_dir($full)) {
+    $script = rtrim($full, DIRECTORY_SEPARATOR) . '/index.php';
+    if (is_file($script)) {
+        $scriptname = rtrim($uri, '/') . '/index.php';
+        $_SERVER['SCRIPT_FILENAME'] = $script;
+        $_SERVER['SCRIPT_NAME'] = $scriptname;
+        $_SERVER['PHP_SELF'] = $scriptname;
+        $_SERVER['PATH_INFO'] = '';
+        chdir(dirname($script));
+        require $script;
+        return true;
+    }
+}
+
 if (preg_match('#^((?:/[^/]+)*/[^/]+\.php)(/.*)?$#', $uri, $matches)) {
     $script = __DIR__ . $matches[1];
     if (is_file($script)) {

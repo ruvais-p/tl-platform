@@ -4,6 +4,14 @@ import { curriculumApi } from "./api";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("typed curriculum client", () => {
+  it("creates draft programs through the curriculum proxy", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => Response.json(JSON.parse(String(init?.body))));
+    vi.stubGlobal("fetch", fetchMock);
+    const program = await curriculumApi.createProgram({ name: "Science", code: "science", status: "DRAFT" });
+    expect(program).toMatchObject({ name: "Science", code: "science", status: "DRAFT" });
+    expect(fetchMock).toHaveBeenCalledWith("/api/curriculum/programs", expect.objectContaining({ method: "POST" }));
+  });
+
   it("round-trips extended content without dropping unknown keys", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => Response.json(JSON.parse(String(init?.body))));
     vi.stubGlobal("fetch", fetchMock);

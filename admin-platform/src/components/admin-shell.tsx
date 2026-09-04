@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
+  BriefcaseBusiness,
   ChartColumn,
   ClipboardCheck,
   FileStack,
@@ -88,6 +89,12 @@ const navigation: NavigationItem[] = [
     href: "/access",
     label: "Access",
     icon: ShieldCheck,
+    permissions: ["accounts.manage_users"],
+  },
+  {
+    href: "/people",
+    label: "Human resources",
+    icon: BriefcaseBusiness,
     permissions: ["accounts.manage_users"],
   },
   {
