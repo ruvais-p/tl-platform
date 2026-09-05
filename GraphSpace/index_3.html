@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphSpace — 2D/3D Graphing &amp; LP Dashboard</title>
+<meta name="description" content="A from-scratch WebGL 3D graphing calculator: its own math parser, marching-tetrahedra implicit surfaces, and a Desmos-style expression sidebar — no third-party math or graphing engine.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%93%90%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="brand"><span class="dot"></span>GraphSpace</div>
+
+    <div class="mode-switch" id="mode-switch" role="tablist" aria-label="2D / 3D workspace mode">
+      <button class="mode-btn active" data-mode="3d" id="mode-btn-3d" title="Switch to the 3D graphing workspace">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 8v8l9 5 9-5V8l-9-5z"/><path d="M12 3v18M3 8l9 5 9-5"/></svg>
+        3D Workspace
+      </button>
+      <button class="mode-btn" data-mode="2d" id="mode-btn-2d" title="Switch to the 2D LP &amp; geometry workspace">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="1.4"/><path d="M4 14h16M9 4v16" opacity=".8"/></svg>
+        2D Workspace
+      </button>
+    </div>
+
+    <div class="workspace-tabs" id="workspace-tabs" role="tablist" aria-label="Saved workspaces">
+      <button class="ws-tab active" data-ws="general" title="Blank workspace">General Workspace</button>
+      <button class="ws-tab" data-ws="example1" title="Loads a Product Mix LP preset in the 2D workspace">Example 1 (Product Mix LP)</button>
+      <button class="ws-tab" data-ws="example2" title="Loads the Bottling Plant LP preset in the 2D workspace">Example 2 (Bottling Plant)</button>
+      <button class="ws-tab" data-ws="example3" title="Loads the Two-Plant Production LP preset in the 2D workspace">Example 3 (Two-Plant Production)</button>
+      <button class="ws-tab" data-ws="example4" title="Loads the Radio Components LP preset in the 2D workspace">Example 4 (Radio Components)</button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button class="tb-btn" id="btn-tour" title="Take a guided tour of the workspace">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Take Tour
+    </button>
+    <button class="tb-btn" id="btn-help" title="Syntax help &amp; examples">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" stroke-linecap="round"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+      Help
+    </button>
+    <button class="tb-btn" id="btn-share" title="Copy shareable URL with current state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8 15.8 7.2M8.2 13.2l7.6 3.6"/></svg>
+      Share
+    </button>
+    <button class="tb-btn" id="btn-export" title="Export PNG / OBJ / STL">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h16" stroke-linecap="round"/></svg>
+      Export
+    </button>
+    <button class="tb-btn" id="btn-theme" title="Toggle light/dark theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.4 5.4 0 0 1 12 3z"/></svg>
+    </button>
+  </div>
+
+  <div id="main">
+    <div id="sidebar" class="ws-sidebar-3d">
+      <div id="sb-toolbar">
+        <button class="add-btn" data-add="expr" title="New math expression">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>Expr
+        </button>
+        <button class="add-btn" data-add="folder" title="New folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a1 1 0 0 1 1-1h4l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/></svg>Folder
+        </button>
+        <button class="add-btn" data-add="table" title="New data table">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15 4.5v15"/></svg>Table
+        </button>
+        <button class="add-btn" data-add="note" title="New text note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16l-3.5-2.5L12 20l-3.5-2.5L5 20V4z"/><path d="M8 9h8M8 12.5h5"/></svg>Note
+        </button>
+      </div>
+      <div id="expr-list"></div>
+      <div id="sb-bottom">
+        <button class="tb-btn" id="btn-example" style="flex:1;justify-content:center">Load Example Gallery</button>
+        <button class="tb-btn" id="btn-clear" title="Clear all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <button id="sb-collapse-tab" title="Collapse/expand sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div id="viewport">
+      <div id="canvas-host"></div>
+      <canvas id="axis-gizmo"></canvas>
+
+      <div id="progress-toast"><span class="spin"></span><span id="progress-text">Computing implicit surface…</span></div>
+
+      <div id="vp-toolbar">
+        <div class="vp-group">
+          <button class="vp-btn" id="vp-zoom-in" title="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6" stroke-linecap="round"/></svg></button>
+          <button class="vp-btn" id="vp-zoom-out" title="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6" stroke-linecap="round"/></svg></button>
+          <button class="vp-btn" id="vp-reset" title="Reset camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 1 3 6.7" stroke-linecap="round"/><path d="M3 12V7M3 12h5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <div class="vp-group">
+          <button class="vp-btn active" id="vp-proj-persp" title="Perspective projection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 8v8l9 5 9-5V8l-9-5z"/><path d="M12 3v18M3 8l9 5 9-5" /></svg></button>
+          <button class="vp-btn" id="vp-proj-ortho" title="Orthographic projection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 10h16M10 4v16"/></svg></button>
+        </div>
+        <div class="vp-group">
+          <button class="vp-btn active" id="vp-tool-orbit" title="Orbit / inspect mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9" ry="4"/></svg></button>
+          <button class="vp-btn" id="vp-tool-trace" title="Trace mode: snap to curves/surfaces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16c3-8 6-8 8-4s5 4 8-4" stroke-linecap="round"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></button>
+        </div>
+        <div class="vp-group">
+          <button class="vp-btn" id="vp-grid-toggle" title="Toggle plane grids"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9h18M3 15h18M9 3v18M15 3v18" opacity=".8"/></svg></button>
+          <button class="vp-btn active" id="vp-bbox-toggle" title="Toggle bounding box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l5-3 5 3v10l-5 3-5-3V7z"/><path d="M9 4v13M4 7l5 3 5-3M9 17l5-3"/></svg></button>
+        </div>
+      </div>
+
+      <div id="view-presets">
+        <button class="preset-btn" data-view="iso">Isometric</button>
+        <button class="preset-btn" data-view="top">Top (XY)</button>
+        <button class="preset-btn" data-view="front">Front (XZ)</button>
+        <button class="preset-btn" data-view="side">Side (YZ)</button>
+      </div>
+
+      <div id="status-bar">
+        <span id="status-fps">60 fps</span><span>·</span><span id="status-tris">0 tris</span><span>·</span><span id="status-cam">—</span>
+      </div>
+
+      <div id="tooltip"></div>
+    </div>
+  </div>
+
+  <!-- ===================== 2D Workspace (LP + Dynamic Geometry) ===================== -->
+  <div id="main-2d" class="hidden">
+    <div class="g2d-panel" id="g2d-panel">
+      <div class="g2d-card g2d-problem-card hidden" id="g2d-problem-card">
+        <div class="g2d-card-title">Example 1 — Product Mix LP (Problem Statement)</div>
+        <p class="g2d-problem-text">
+          A manufacturing company is engaged in producing three types of products: A, B and C.
+          The production department produces, each day, components sufficient to make 50 units
+          of A, 25 units of B and 30 units of C. The management is confronted with the problem of
+          optimizing the daily production of products in the assembly department where only 100
+          man&#8209;hours are available daily to assemble the products. The following additional
+          information is available.
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Type of Product</th><th>Profit Contribution per Unit (Rs)</th><th>Assembly Time per Product (hrs)</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>12</td><td>0.8</td></tr>
+            <tr><td>B</td><td>20</td><td>1.7</td></tr>
+            <tr><td>C</td><td>45</td><td>2.5</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-problem-text">
+          The company has a daily order commitment for 20 units of product A and a total of 15
+          units of products B and C combined. Formulate this problem as an LP model so as to
+          maximize the total profit.
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Resources / Constraints</th><th>A</th><th>B</th><th>C</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Production capacity (units)</td><td>50</td><td>25</td><td>30</td><td>&#8212;</td></tr>
+            <tr><td>Man&#8209;hours per unit</td><td>0.8</td><td>1.7</td><td>2.5</td><td>100</td></tr>
+            <tr><td>Order commitment (units)</td><td>20</td><td colspan="2">15 (B + C)</td><td>&#8212;</td></tr>
+            <tr><td>Profit contribution (Rs/unit)</td><td>12</td><td>20</td><td>45</td><td>&#8212;</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-hint">
+          Decision variables: x&#8321;, x&#8322;, x&#8323; = units of A, B, C produced.<br>
+          <strong>Maximize Z = 12x&#8321; + 20x&#8322; + 45x&#8323;</strong><br>
+          s.t. 0.8x&#8321;+1.7x&#8322;+2.5x&#8323; &le; 100; x&#8321; &le; 50; x&#8322; &le; 25; x&#8323; &le; 30;
+          x&#8321; &ge; 20; x&#8322;+x&#8323; &ge; 15; x&#8321;,x&#8322;,x&#8323; &ge; 0.<br>
+          Plotted below with x&#8321;&#8594;x, x&#8322;&#8594;y, and x&#8323; as the Fixed Slice z
+          (drag it between 0 and 30 to see production of C shift the feasible region).
+        </p>
+      </div>
+
+      <div class="g2d-card g2d-problem-card hidden" id="g2d-problem-card-2">
+        <div class="g2d-card-title">Example 2 — Bottling Plant LP (Problem Statement)</div>
+        <p class="g2d-problem-text">
+          A production planner in a soft drink plant has two bottling machines, A and B. Machine A
+          is designed for 8&#8209;ounce bottles and B for 16&#8209;ounce bottles, but each can also
+          be used for the other bottle size with some loss of efficiency. The manufacturing data is
+          as follows:
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Machine</th><th>8&#8209;ounce Bottles</th><th>16&#8209;ounce Bottles</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>100/minute</td><td>40/minute</td></tr>
+            <tr><td>B</td><td>60/minute</td><td>75/minute</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-problem-text">
+          The machines can be run 8 hours per day, 5 days per week (2,400 minutes/week each).
+          Profit is 15 paise (Rs 0.15) on an 8&#8209;ounce bottle and 25 paise (Rs 0.25) on a
+          16&#8209;ounce bottle. Weekly production cannot exceed 300,000 bottles, and the market
+          can absorb at most 25,000 8&#8209;ounce bottles and 7,000 16&#8209;ounce bottles per
+          week. Formulate this problem as an LP model to maximize total profit.
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Constraints</th><th>8&#8209;oz Bottles</th><th>16&#8209;oz Bottles</th><th>Availability</th></tr></thead>
+          <tbody>
+            <tr><td>Machine A time</td><td>100/min</td><td>40/min</td><td>2,400 min/week</td></tr>
+            <tr><td>Machine B time</td><td>60/min</td><td>75/min</td><td>2,400 min/week</td></tr>
+            <tr><td>Production</td><td>1</td><td>1</td><td>300,000 units/week</td></tr>
+            <tr><td>Marketing</td><td>1</td><td>&#8212;</td><td>25,000 units/week</td></tr>
+            <tr><td>Marketing</td><td>&#8212;</td><td>1</td><td>7,000 units/week</td></tr>
+            <tr><td>Profit/unit (Rs)</td><td>0.15</td><td>0.25</td><td>&#8212;</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-hint">
+          Decision variables: x&#8321;, x&#8322; = units of 8&#8209;oz and 16&#8209;oz bottles
+          produced weekly.<br>
+          <strong>Maximize Z = 0.15x&#8321; + 0.25x&#8322;</strong><br>
+          s.t. x&#8321;/100 + x&#8322;/40 &le; 2400; x&#8321;/60 + x&#8322;/75 &le; 2400;
+          x&#8321;+x&#8322; &le; 300000; x&#8321; &le; 25000; x&#8322; &le; 7000; x&#8321;,x&#8322; &ge; 0.<br>
+          Plotted below with x&#8321;&#8594;x, x&#8322;&#8594;y. <strong>Note:</strong> the machine&#8209;time
+          and production constraints turn out not to be binding here — the marketing caps alone
+          define the feasible region. Use the two zoom buttons below to see the full picture, then
+          zoom in on the (much smaller) feasible region.
+        </p>
+      </div>
+
+      <div class="g2d-card g2d-problem-card hidden" id="g2d-problem-card-3">
+        <div class="g2d-card-title">Example 3 — Two-Plant Production LP (Problem Statement)</div>
+        <p class="g2d-problem-text">
+          A company has two plants, each of which produces and supplies two products: A and B. The
+          plants can each work up to 16 hours a day. In plant 1, it takes three hours to prepare and
+          pack 1,000 gallons of A and one hour to prepare and pack one quintal of B. In plant 2, it
+          takes two hours to prepare and pack 1,000 gallons of A and 1.5 hours to prepare and pack a
+          quintal of B. In plant 1, it costs Rs 15,000 to prepare and pack 1,000 gallons of A and Rs
+          28,000 to prepare and pack a quintal of B, whereas these costs are Rs 18,000 and Rs 26,000,
+          respectively, in plant 2. The company is obliged to produce daily at least 10 thousand
+          gallons of A and 8 quintals of B.
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Resources / Constraints</th><th>Product A</th><th>Product B</th><th>Total Availability</th></tr></thead>
+          <tbody>
+            <tr><td>Preparation time (hrs)</td><td>Plant 1: 3 hrs/'000 gal</td><td>1 hr/quintal</td><td>16 hrs</td></tr>
+            <tr><td></td><td>Plant 2: 2 hrs/'000 gal</td><td>1.5 hr/quintal</td><td>16 hrs</td></tr>
+            <tr><td>Minimum daily production</td><td>10 thousand gallons</td><td>8 quintals</td><td>&#8212;</td></tr>
+            <tr><td>Cost of production (Rs)</td><td>Plant 1: 15,000/'000 gal</td><td>28,000/quintal</td><td>&#8212;</td></tr>
+            <tr><td></td><td>Plant 2: 18,000/'000 gal</td><td>26,000/quintal</td><td>&#8212;</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-problem-text">
+          Formulate this problem as an LP model to find out how the company should organize its
+          production so that the required amounts of the two products are obtained at minimum cost.
+        </p>
+        <p class="g2d-hint">
+          Decision variables: x&#8321;, x&#8322; = '000 gallons of A produced in plants 1 and 2;
+          x&#8323;, x&#8324; = quintals of B produced in plants 1 and 2.<br>
+          <strong>Minimize Z = 15000x&#8321; + 18000x&#8322; + 28000x&#8323; + 26000x&#8324;</strong><br>
+          s.t. 3x&#8321;+x&#8322; &le; 16; 2x&#8323;+1.5x&#8324; &le; 16; x&#8321;+x&#8322; &ge; 10;
+          x&#8323;+x&#8324; &ge; 8; x&#8321;,x&#8322;,x&#8323;,x&#8324; &ge; 0.<br>
+          <strong>Note:</strong> the two product lines share no constraint and don't interact in the
+          objective, so this 4&#8209;variable problem is really <em>two independent 2&#8209;variable
+          LPs</em>. Plotted below is the <strong>Product A</strong> subproblem (x&#8321;&#8594;x,
+          x&#8322;&#8594;y) &mdash; minimum at (3, 7), Z = 171,000. The <strong>Product B</strong>
+          subproblem (minimize 28000x&#8323;+26000x&#8324; s.t. 2x&#8323;+1.5x&#8324;&le;16,
+          x&#8323;+x&#8324;&ge;8) solves the same way, with its own minimum at (x&#8323;,x&#8324;) =
+          (0, 8), Z = 208,000. Combined minimum total cost: Rs 379,000.
+        </p>
+      </div>
+
+      <div class="g2d-card g2d-problem-card hidden" id="g2d-problem-card-4">
+        <div class="g2d-card-title">Example 4 — Radio Components LP (Problem Statement)</div>
+        <p class="g2d-problem-text">
+          An electronic company is engaged in the production of two components C&#8321; and C&#8322;
+          used in radio sets. Each unit of C&#8321; costs the company Rs 5 in wages and Rs 5 in
+          material, while each of C&#8322; costs the company Rs 25 in wages and Rs 15 in material.
+          The company sells both products on one&#8209;period credit terms, but the company's labour
+          and material expenses must be paid in cash. The selling price of C&#8321; is Rs 30 per unit
+          and of C&#8322; it is Rs 70 per unit. Because of the strong monopoly of the company for
+          these components, it is assumed that the company can sell at the prevailing prices as many
+          units as it produces. The company's production capacity is, however, limited by two
+          considerations. First, at the beginning of period 1, the company has an initial balance of
+          Rs 4,000 (cash plus bank credit plus collections from past credit sales). Second, the
+          company has available in each period 2,000 hours of machine time and 1,400 hours of
+          assembly time. The production of each C&#8321; requires 3 hours of machine time and 2 hours
+          of assembly time, whereas the production of each C&#8322; requires 2 hours of machine time
+          and 3 hours of assembly time. Formulate this problem as an LP model so as to maximize the
+          total profit to the company.
+        </p>
+        <table class="g2d-results-table g2d-data-table">
+          <thead><tr><th>Resources / Constraints</th><th>C&#8321;</th><th>C&#8322;</th><th>Total Availability</th></tr></thead>
+          <tbody>
+            <tr><td>Budget (Rs)</td><td>10/unit</td><td>40/unit</td><td>Rs 4,000</td></tr>
+            <tr><td>Machine time</td><td>3 hrs/unit</td><td>2 hrs/unit</td><td>2,000 hours</td></tr>
+            <tr><td>Assembly time</td><td>2 hrs/unit</td><td>3 hrs/unit</td><td>1,400 hours</td></tr>
+            <tr><td>Selling price (Rs)</td><td>30</td><td>70</td><td>&#8212;</td></tr>
+            <tr><td>Cost: wages + material (Rs)</td><td>10</td><td>40</td><td>&#8212;</td></tr>
+          </tbody>
+        </table>
+        <p class="g2d-hint">
+          Decision variables: x&#8321;, x&#8322; = units of C&#8321;, C&#8322; produced.<br>
+          Profit/unit = selling price &minus; cost price = (30&minus;10)x&#8321; + (70&minus;40)x&#8322;.<br>
+          <strong>Maximize Z = 20x&#8321; + 30x&#8322;</strong><br>
+          s.t. 10x&#8321;+40x&#8322; &le; 4000 (budget); 3x&#8321;+2x&#8322; &le; 2000 (machine time);
+          2x&#8321;+3x&#8322; &le; 1400 (assembly time); x&#8321;,x&#8322; &ge; 0.<br>
+          <strong>Note:</strong> like Example 2, this one has non&#8209;binding constraints &mdash;
+          the machine&#8209;time and assembly&#8209;time limits are both completely redundant here;
+          the budget line alone shapes the whole feasible region (check for yourself: neither time
+          line ever crosses the budget line for x&#8321;,x&#8322;&ge;0). Optimum at (x&#8321;,x&#8322;)
+          = (400, 0), Z = 8,000 &mdash; all budget on C&#8321;, with machine and assembly time both
+          left well under capacity.
+        </p>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Workspace Preferences</div>
+        <label class="g2d-toggle-label">
+          <input type="checkbox" id="g2d-toggle-region" checked>
+          <span>Show Feasible Region (Green Shading)</span>
+        </label>
+        <div class="g2d-tool-grid" style="grid-template-columns:1fr 1fr; margin-top:8px;">
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm" id="g2d-btn-zoom-constraints" title="Fit the view to show every plotted constraint line">Zoom: All Constraints</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm" id="g2d-btn-zoom-feasible" title="Fit the view tightly around the current feasible region">Zoom: Feasible Region</button>
+        </div>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Variable Settings</div>
+        <div class="g2d-slice-row">
+          <span id="g2d-z-slice-label">Fixed Slice: <strong>z</strong></span>
+          <span class="g2d-slice-badge" id="g2d-z-slice-badge">0</span>
+        </div>
+        <input type="range" id="g2d-z-slice" class="g2d-slice-range" min="-10" max="10" step="0.5" value="0">
+        <div class="g2d-slice-minmax">
+          <span id="g2d-z-slice-minlabel">-10</span>
+          <span id="g2d-z-slice-maxlabel">Max 10</span>
+        </div>
+        <p class="g2d-hint" id="g2d-z-slice-hint">Projects any 3D plane <code>ax+by+cz=d</code> onto this 2D view at the chosen z.</p>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">
+          <span>LP Constraints</span>
+          <label class="g2d-toggle-label"><input type="checkbox" id="g2d-non-negativity" checked> x, y ≥ 0</label>
+        </div>
+        <div class="g2d-form-group">
+          <input type="number" id="g2d-c-a" class="g2d-input g2d-num-input" value="1"> x +
+          <input type="number" id="g2d-c-b" class="g2d-input g2d-num-input" value="1"> y +
+          <input type="number" id="g2d-c-cz" class="g2d-input g2d-num-input" value="0"> z
+          <select id="g2d-c-op" class="g2d-input">
+            <option value="<=">&le;</option>
+            <option value=">=">&ge;</option>
+            <option value="=">=</option>
+          </select>
+          <input type="number" id="g2d-c-d" class="g2d-input g2d-num-input" value="10">
+          <button id="g2d-btn-add-constraint" class="g2d-btn g2d-btn-sm">+</button>
+        </div>
+        <ul id="g2d-constraint-list" class="g2d-item-list"></ul>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Geometric Constructors</div>
+        <div class="g2d-tool-grid">
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="segment">Segment</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="ray">Ray</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="vector">Vector</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="polygon">Polygon</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="circle">Circle</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="midpoint">Midpoint</button>
+          <button class="g2d-btn g2d-btn-sm" id="g2d-btn-finish-poly" style="display:none; background:#16a34a; color:#fff; grid-column: span 3;">Finish Polygon</button>
+        </div>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Active Geometric Expressions</div>
+        <ul id="g2d-geom-expression-list" class="g2d-item-list"></ul>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Transformations &amp; Tools</div>
+        <div class="g2d-tool-grid">
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="reflect">Reflect</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm g2d-tool-palette-btn" data-tool="rotate">Rotate 90°</button>
+          <button class="g2d-btn g2d-btn-secondary g2d-btn-sm" id="g2d-btn-clear-geom">Clear Geom</button>
+        </div>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Points</div>
+        <div class="g2d-form-group">
+          <input type="text" id="g2d-pt-name" class="g2d-input" style="width:35px;" placeholder="P">
+          (x: <input type="number" id="g2d-pt-x" class="g2d-input g2d-num-input" value="0">,
+          y: <input type="number" id="g2d-pt-y" class="g2d-input g2d-num-input" value="0">)
+          <button id="g2d-btn-add-point" class="g2d-btn g2d-btn-sm">+</button>
+        </div>
+        <ul id="g2d-point-list" class="g2d-item-list"></ul>
+      </div>
+
+      <div class="g2d-card">
+        <div class="g2d-card-title">Objective Function (Z)</div>
+        <div class="g2d-form-group">
+          <select id="g2d-obj-type" class="g2d-input">
+            <option value="max">Max</option>
+            <option value="min">Min</option>
+          </select>
+          Z =
+          <input type="number" id="g2d-obj-c1" class="g2d-input g2d-num-input" value="1"> x +
+          <input type="number" id="g2d-obj-c2" class="g2d-input g2d-num-input" value="1"> y +
+          <input type="number" id="g2d-obj-c3" class="g2d-input g2d-num-input" value="0"> z
+        </div>
+        <div class="g2d-obj-results">
+          <span style="color:#16a34a;">Max Z: <span id="g2d-obj-val-max">-</span></span>
+          <span style="color:#dc2626;">Min Z: <span id="g2d-obj-val-min">-</span></span>
+        </div>
+      </div>
+
+      <div class="g2d-card" style="flex:1;">
+        <div class="g2d-card-title">Computed Results</div>
+        <div style="font-size:0.8rem; margin-bottom:4px;"><strong>Feasible Area:</strong> <span id="g2d-res-area">0</span></div>
+        <table class="g2d-results-table">
+          <thead><tr><th>Vertex</th><th>(x, y)</th><th>Z</th></tr></thead>
+          <tbody id="g2d-vertex-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="g2d-canvas-container" id="g2d-canvas-wrapper">
+      <div class="g2d-toolbar">
+        <button class="g2d-tool-btn active" id="g2d-tool-select">Select/Move</button>
+        <button class="g2d-tool-btn" id="g2d-tool-point">Add Point</button>
+        <label class="g2d-toggle-label" style="margin:0 4px;">
+          <input type="checkbox" id="g2d-top-toggle-region" checked>
+          <span>Shading</span>
+        </label>
+        <button class="g2d-tool-btn" id="g2d-btn-reset">Reset View</button>
+        <button class="g2d-tool-btn" id="g2d-btn-fullscreen">Fullscreen</button>
+      </div>
+
+      <div class="g2d-overlay-msg" id="g2d-overlay-msg">Mode: Select/Move</div>
+
+      <svg id="g2d-graph" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="g2d-canvas-clip"><rect id="g2d-clip-rect" width="100%" height="100%"/></clipPath>
+          <marker id="g2d-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
+          </marker>
+        </defs>
+        <g id="g2d-grid-layer"></g>
+        <g id="g2d-feasible-layer" clip-path="url(#g2d-canvas-clip)"></g>
+        <g id="g2d-lines-layer" clip-path="url(#g2d-canvas-clip)"></g>
+        <g id="g2d-geometry-layer" clip-path="url(#g2d-canvas-clip)"></g>
+        <g id="g2d-points-layer" clip-path="url(#g2d-canvas-clip)"></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Color Popover ===================== -->
+<div class="popover hidden" id="color-popover">
+  <div id="color-wheel-wrap">
+    <div id="sv-box"><div id="sv-cursor"></div></div>
+    <div id="hue-slider"><div id="hue-cursor"></div></div>
+    <div class="color-fields">
+      <input id="hex-field" value="#5b9bff" maxlength="7">
+      <input id="rgb-field" value="91,155,255">
+    </div>
+    <div class="opacity-row">Opacity <input type="range" id="opacity-field" min="0" max="100" value="90"><span id="opacity-val">90%</span></div>
+    <div class="style-row">
+      <div class="style-pill" data-style="solid">Solid</div>
+      <div class="style-pill" data-style="wireframe">Wire</div>
+      <div class="style-pill" data-style="both">Solid+Wire</div>
+    </div>
+    <div class="style-row">
+      <div class="style-pill" data-color-mode="fixed">Fixed Color</div>
+      <div class="style-pill" data-color-mode="height">Height Gradient</div>
+      <div class="style-pill" data-color-mode="spectral">Spectral</div>
+    </div>
+    <div class="preset-swatch-row" id="preset-swatches"></div>
+  </div>
+</div>
+
+<!-- ===================== Export Modal ===================== -->
+<div class="overlay hidden" id="export-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Export</h3><button class="icon-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <div class="style-row" style="margin-bottom:12px">
+        <div class="style-pill active" data-export-tab="png">PNG Image</div>
+        <div class="style-pill" data-export-tab="obj">OBJ Model</div>
+        <div class="style-pill" data-export-tab="stl">STL Model</div>
+      </div>
+      <div id="export-pane-png">
+        <p>High-resolution capture of the current view. The image opens below — right-click (or long-press) it and choose <b>“Save image as…”</b> to download.</p>
+        <button class="tb-btn primary" id="btn-do-png" style="margin-bottom:10px">Capture PNG</button>
+        <img id="export-img-preview" class="hidden">
+      </div>
+      <div id="export-pane-obj" class="hidden">
+        <p>Wavefront OBJ mesh of all visible surfaces/curves, merged into one file. Copy the text below and save it locally as <code>scene.obj</code>.</p>
+        <button class="tb-btn primary" id="btn-do-obj" style="margin-bottom:10px">Generate OBJ</button>
+        <textarea class="export-textarea" id="obj-output" placeholder="Click Generate OBJ…" readonly></textarea>
+        <button class="tb-btn" id="btn-copy-obj" style="margin-top:8px">Copy to clipboard</button>
+      </div>
+      <div id="export-pane-stl" class="hidden">
+        <p>ASCII STL mesh of all visible surfaces, merged into one file. Copy the text below and save it locally as <code>scene.stl</code>.</p>
+        <button class="tb-btn primary" id="btn-do-stl" style="margin-bottom:10px">Generate STL</button>
+        <textarea class="export-textarea" id="stl-output" placeholder="Click Generate STL…" readonly></textarea>
+        <button class="tb-btn" id="btn-copy-stl" style="margin-top:8px">Copy to clipboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Share Modal ===================== -->
+<div class="overlay hidden" id="share-overlay">
+  <div class="modal" style="width:min(460px,92vw)">
+    <div class="modal-head"><h3>Share this graph</h3><button class="icon-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body">
+      <p>This link encodes every expression, color, and viewport setting in the URL hash — anyone who opens it sees exactly this graph.</p>
+      <textarea class="export-textarea" id="share-url-output" style="height:80px" readonly></textarea>
+      <button class="tb-btn primary" id="btn-copy-share" style="margin-top:10px">Copy link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Help Modal ===================== -->
+<div class="overlay hidden" id="help-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Syntax guide</h3><button class="icon-btn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button></div>
+    <div class="modal-body" id="help-body"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.js"></script>
+<script src="js/00_config.js"></script>
+<script src="js/01_utils.js"></script>
+<script src="js/02_engine_math.js"></script>
+<script src="js/03_engine_marching.js"></script>
+<script src="js/04_engine_geometry.js"></script>
+<script src="js/05_engine_renderer.js"></script>
+<script src="js/06_ui_state.js"></script>
+<script src="js/07_ui_sidebar.js"></script>
+<script src="js/08_ui_colorpicker.js"></script>
+<script src="js/09_ui_viewport.js"></script>
+<script src="js/10_ui_export.js"></script>
+<script src="js/11_main.js"></script>
+<script src="js/12_ui_geometry2d.js"></script>
+<script src="js/13_ui_dashboard.js"></script>
+<script src="js/14_ui_tour.js"></script>
+</body>
+</html>
