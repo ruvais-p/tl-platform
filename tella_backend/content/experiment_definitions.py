@@ -2,7 +2,7 @@ import math
 import re
 
 
-SUPPORTED_RENDERERS = frozenset({"geogebra", "placeholder"})
+SUPPORTED_RENDERERS = frozenset({"geogebra", "placeholder", "graphspace"})
 SUPPORTED_COMPLETION_OPERATORS = frozenset(
     {
         "equals",
