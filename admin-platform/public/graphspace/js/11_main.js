@@ -23,8 +23,8 @@
 
     attachKeyboardUX();
 
-    function animLoop(){ requestAnimationFrame(animLoop); State.tickAnimation(); }
-    requestAnimationFrame(animLoop);
+    // Reuse the renderer frame instead of maintaining a second perpetual RAF loop.
+    EngineRenderer.setTick(()=>State.tickAnimation());
   }
 
   function seedStarterGraph(){

@@ -97,7 +97,7 @@ CHAPTERS = [
     {
         "title": "How Agents Plan, Act, and Improve",
         "slug": "how-agents-plan-act-and-improve",
-        "minutes": 55,
+        "minutes": 90,
         "description": "Understand goals, tools, the ReAct loop, reflection, and the trade-off between autonomy and control.",
         "subtopics": [
             {
@@ -107,6 +107,8 @@ CHAPTERS = [
                 "activities": [
                     ("CONCEPT_OVERVIEW", "ReAct without the jargon", 10, "Follow how an agent reasons, calls a tool, observes the result, and selects its next step."),
                     ("SIMULATION", "Run the inbox-priority agent", 20, "Choose tools and next actions for an agent handling an ambiguous executive request."),
+                    ("EXPERIMENT", "Build an agent experiment model", 15, "Model a bounded agent experiment by defining its goal, inputs, tools, decision loop, human checkpoint, and success measure."),
+                    ("EXPERIMENT", "Map AI agent value and risk in GraphSpace", 20, "Use a 3D decision surface to explore how business value, autonomy, and risk change an AI agent pilot recommendation."),
                 ],
             },
             {
@@ -310,12 +312,29 @@ class Command(BaseCommand):
         }
         ActivityContent.objects.update_or_create(activity=activity, defaults={"content_type": "application/json", "content": content})
         if activity.activity_type in {LearningActivity.ActivityType.EXPERIMENT, LearningActivity.ActivityType.SIMULATION}:
+            experiment_type = Experiment.ExperimentType.QUESTION_BASED
+            response_fields = ["decision", "rationale", "risk", "human_checkpoint"]
+            if activity.title == "Build an agent experiment model":
+                response_fields = ["goal", "inputs", "tools", "decision_loop", "human_checkpoint", "success_measure"]
+            configuration = {"response_fields": response_fields}
+            if activity.title == "Map AI agent value and risk in GraphSpace":
+                experiment_type = Experiment.ExperimentType.HTML_INTERACTIVE
+                configuration = {
+                    "schema_version": 1,
+                    "renderer": "graphspace",
+                    "renderer_config": {
+                        "path": "/graphspace/index_3.html",
+                        "heading": "AI agent value-risk decision surface",
+                        "message": "Open GraphSpace and graph z=(x*y)/10, where x is expected business value and y is autonomy. Compare the surface against operational risk before recommending a pilot boundary.",
+                        "note": "Keep x and y between 0 and 10. Use the resulting surface as evidence for a bounded pilot, not as an automated approval decision.",
+                    },
+                }
             Experiment.objects.update_or_create(
                 activity=activity,
                 defaults={
-                    "experiment_type": Experiment.ExperimentType.QUESTION_BASED,
+                    "experiment_type": experiment_type,
                     "instructions": activity.description,
-                    "configuration": {"response_fields": ["decision", "rationale", "risk", "human_checkpoint"]},
+                    "configuration": configuration,
                     "external_url": None,
                 },
             )

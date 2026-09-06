@@ -18,6 +18,7 @@ const EngineRenderer = (() => {
   let fpsEl, trisEl, camEl;
   let lastFrameT = performance.now(), frameCount=0, fpsAccum=0, fps=60;
   let onTick = null;
+  let isVisible = true, resizeObserver = null;
 
   const PHI_MIN = 0.02, PHI_MAX = Math.PI-0.02;
 
@@ -44,7 +45,8 @@ const EngineRenderer = (() => {
     scene = new THREE.Scene();
     const isSoftware = detectSoftwareRenderer();
     rendererGL = new THREE.WebGLRenderer({ antialias: !isSoftware, alpha:false, powerPreference:'high-performance' });
-    rendererGL.setPixelRatio(Math.min(isSoftware?1:2, window.devicePixelRatio||1));
+    const lowPower = (navigator.hardwareConcurrency || 4) <= 4;
+    rendererGL.setPixelRatio(Math.min(isSoftware || lowPower ? 1 : 1.5, window.devicePixelRatio||1));
     host.appendChild(rendererGL.domElement);
     canvas = rendererGL.domElement;
 
@@ -64,7 +66,11 @@ const EngineRenderer = (() => {
 
     setBg();
     attachControls();
-    window.addEventListener('resize', onResize);
+    resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(onResize) : null;
+    if(resizeObserver) resizeObserver.observe(host); else window.addEventListener('resize', onResize);
+    if(typeof IntersectionObserver === 'function'){
+      new IntersectionObserver(entries=>{ isVisible = entries[0] ? entries[0].isIntersecting : true; }, { rootMargin:'120px' }).observe(host);
+    }
     onResize();
     requestAnimationFrame(loop);
   }
@@ -390,7 +396,9 @@ const EngineRenderer = (() => {
   }
 
   function drawGizmo(){
-    const w=gizmoCanvas.width=gizmoCanvas.clientWidth*2, h=gizmoCanvas.height=gizmoCanvas.clientHeight*2;
+    const w=Math.max(1,Math.round(gizmoCanvas.clientWidth*2)), h=Math.max(1,Math.round(gizmoCanvas.clientHeight*2));
+    if(gizmoCanvas.width!==w) gizmoCanvas.width=w;
+    if(gizmoCanvas.height!==h) gizmoCanvas.height=h;
     gizmoCtx.clearRect(0,0,w,h);
     const cx=w/2, cy=h/2, R=w*0.32;
     const pos = getCamPos();
@@ -436,6 +444,7 @@ const EngineRenderer = (() => {
 
   function loop(now){
     requestAnimationFrame(loop);
+    if(document.hidden || !isVisible){ lastFrameT=now; return; }
     updateCamera();
     rendererGL.render(scene, activeCam);
     drawGizmo();
@@ -447,6 +456,8 @@ const EngineRenderer = (() => {
     }
     if(onTick) onTick();
   }
+
+  function setTick(callback){ onTick = callback; }
 
   function captureImage(scale){
     scale = scale || 2;
@@ -467,6 +478,6 @@ const EngineRenderer = (() => {
   return {
     init, setRowObject, clearRow, setRowSamplePoints, setProjection, goToPreset, resetCamera, zoomBy,
     setBounds, getBounds, setGridPlanes, setBboxVisible, setTraceMode, setHoverCallback,
-    onThemeChange, captureImage, getRowGroup, onResize, get camera(){ return activeCam; }, get sph(){return sph;}
+    onThemeChange, captureImage, getRowGroup, onResize, setTick, get camera(){ return activeCam; }, get sph(){return sph;}
   };
 })();

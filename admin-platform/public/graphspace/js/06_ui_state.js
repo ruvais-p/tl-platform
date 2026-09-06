@@ -6,6 +6,7 @@ const State = (() => {
   let autoSliders = new Map(); // name -> {value,min,max,step,animating,dir,loop}
   let listeners = { structure: [], status: [], scope: [], progress: [], slidertick: [] };
   let genCounters = new Map(); // rowId -> generation token (cancel stale async builds)
+  let buildJobs = new Map(); // rowId -> cancellable marching job
   let lastAnimT = performance.now();
 
   function on(evt, fn){ listeners[evt].push(fn); }
@@ -47,6 +48,7 @@ const State = (() => {
     return r;
   }
   function removeRow(id){
+    cancelBuild(id);
     const r = getRow(id);
     if(r && r.kind==='folder'){
       rows.filter(x=>x.folderId===id).forEach(child=>child.folderId=null);
@@ -57,6 +59,8 @@ const State = (() => {
     recomputeAll();
   }
   function clearAll(){
+    buildJobs.forEach(job=>job && job.cancel && job.cancel());
+    buildJobs.clear();
     rows.forEach(r=>EngineRenderer.clearRow(r.id));
     rows = []; autoSliders.clear();
     emit('structure'); emit('scope');
@@ -166,9 +170,15 @@ const State = (() => {
   }
 
   function nextGen(id){
+    cancelBuild(id);
     const g = (genCounters.get(id)||0)+1;
     genCounters.set(id, g);
     return g;
+  }
+  function cancelBuild(id){
+    const activeJob = buildJobs.get(id);
+    if(activeJob && activeJob.cancel) activeJob.cancel();
+    buildJobs.delete(id);
   }
 
   function recomputeAll(){
@@ -194,7 +204,7 @@ const State = (() => {
         emit('status', r.id);
         return;
       }
-      if(!r.visible){ EngineRenderer.clearRow(r.id); r._lastSig=null; emit('status', r.id); return; }
+      if(!r.visible){ cancelBuild(r.id); EngineRenderer.clearRow(r.id); r._lastSig=null; emit('status', r.id); return; }
 
       // Skip rebuilding geometry that hasn't actually changed (text/style/domain,
       // and only the scope values this specific expression depends on) — this is
@@ -242,17 +252,17 @@ const State = (() => {
       case 'vectorfield': return finish(EngineGeometry.buildVectorField(cls, style, domain, scope));
       case 'implicit':
         emit('progress', { id:r.id, active:true, pct:0 });
-        EngineGeometry.buildImplicitAsync(cls, style, domain, scope, {
+        buildJobs.set(r.id, EngineGeometry.buildImplicitAsync(cls, style, domain, scope, {
           onProgress:(p)=>emit('progress', {id:r.id, active:true, pct:p}),
-          onDone:(result)=>{ emit('progress', {id:r.id, active:false}); finish(result); }
-        });
+          onDone:(result)=>{ buildJobs.delete(r.id); emit('progress', {id:r.id, active:false}); finish(result); }
+        }));
         return;
       case 'inequality':
         emit('progress', { id:r.id, active:true, pct:0 });
-        EngineGeometry.buildInequalityAsync(cls, style, domain, scope, {
+        buildJobs.set(r.id, EngineGeometry.buildInequalityAsync(cls, style, domain, scope, {
           onProgress:(p)=>emit('progress', {id:r.id, active:true, pct:p}),
-          onDone:(result)=>{ emit('progress', {id:r.id, active:false}); finish(result); }
-        });
+          onDone:(result)=>{ buildJobs.delete(r.id); emit('progress', {id:r.id, active:false}); finish(result); }
+        }));
         return;
     }
   }

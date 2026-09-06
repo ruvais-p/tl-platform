@@ -96,7 +96,7 @@ Statuses: `DRAFT`, `IN_REVIEW`, `APPROVED`, `PUBLISHED`, `ARCHIVED`. Publishing 
 
 Multipart uploads are stored through Django's configured storage backend. In the local demo, `public_url` points to Django's development media route; production deployments should use object storage/CDN delivery.
 
-When `configuration.renderer` is present, `schema_version` must be `1`. Installed renderer names are `geogebra` and `placeholder`; unknown extension fields are preserved. A GeoGebra definition requires either `renderer_config.material_id` or a validated `renderer_config.workspace`. The current structured workspace type is `linear_programming`; its posted variable, objective, constraint, and axis data is interpreted by both the Next.js and Moodle adapters. Legacy question-based configuration without a renderer remains accepted but is not mounted by the generic Moodle experiment runner.
+When `configuration.renderer` is present, `schema_version` must be `1`. Installed renderer names are `geogebra`, `graphspace`, and `placeholder`; unknown extension fields are preserved. A GeoGebra definition requires either `renderer_config.material_id` or a validated `renderer_config.workspace`. A GraphSpace definition launches the bundled tool at `/graphspace/index_3.html` and requires administrator-authored `heading` and `message` fields. The current structured GeoGebra workspace type is `linear_programming`; its posted variable, objective, constraint, and axis data is interpreted by both the Next.js and Moodle adapters. Legacy question-based configuration without a renderer remains accepted but is not mounted by the generic Moodle experiment runner.
 
 ## Students and enrollment
 

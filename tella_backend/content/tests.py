@@ -168,6 +168,48 @@ class ContentApiTests(ContentFixtureMixin, TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("material_id", str(response.data["configuration"][0]))
 
+    def test_content_manager_can_post_graphspace_experiment(self):
+        self.client.force_authenticate(self.manager)
+        configuration = {
+            "schema_version": 1,
+            "renderer": "graphspace",
+            "renderer_config": {
+                "path": "/graphspace/index_3.html",
+                "heading": "Agent decision surface",
+                "message": "Graph value and autonomy against risk.",
+            },
+        }
+
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.HTML_INTERACTIVE,
+            "instructions": "Explore the decision surface.",
+            "configuration": configuration,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data["configuration"], configuration)
+
+    def test_graphspace_definition_rejects_an_untrusted_launch_path(self):
+        self.client.force_authenticate(self.manager)
+        response = self.client.post(reverse("experiment-list"), {
+            "activity": str(self.experiment_activity.id),
+            "experiment_type": Experiment.ExperimentType.HTML_INTERACTIVE,
+            "instructions": "Explore the decision surface.",
+            "configuration": {
+                "schema_version": 1,
+                "renderer": "graphspace",
+                "renderer_config": {
+                    "path": "https://untrusted.example/graphspace",
+                    "heading": "Agent decision surface",
+                    "message": "Graph value and autonomy against risk.",
+                },
+            },
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("/graphspace/index_3.html", str(response.data["configuration"][0]))
+
     def test_content_manager_can_post_data_driven_lpp_workspace(self):
         self.client.force_authenticate(self.manager)
         configuration = {

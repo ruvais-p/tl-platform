@@ -20,6 +20,7 @@ The activity player selects its presentation from the published activity payload
 - `content` JSON is rendered as safe text, lists, content blocks, source links, prompts, deliverables, and reflections.
 - video records are joined to accessible media metadata and shown as YouTube, an uploaded/direct HTML video, or an external resource.
 - `configuration.renderer = "geogebra"` either loads an administrator-supplied `material_id` or constructs a validated data-driven workspace. The `linear_programming` workspace accepts arbitrary posted variables, bounds, objective coefficients, and linear constraints; it solves a selected 2D slice and draws that construction through GeoGebra.
+- `configuration.renderer = "graphspace"` opens the bundled 2D/3D GraphSpace tool from a validated local path and displays the administrator-authored experiment framing.
 - `configuration.renderer = "placeholder"` renders the supplied heading, message, and note.
 - legacy `response_fields` arrays generate labelled text/number/long-answer controls without knowledge of a specific experiment.
 - unknown renderer names fail safely while preserving the definition for a future adapter.
