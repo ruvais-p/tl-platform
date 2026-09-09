@@ -2,7 +2,7 @@ import math
 import re
 
 
-SUPPORTED_RENDERERS = frozenset({"geogebra", "placeholder"})
+SUPPORTED_RENDERERS = frozenset({"geogebra", "placeholder", "graphspace"})
 SUPPORTED_COMPLETION_OPERATORS = frozenset(
     {
         "equals",
@@ -297,6 +297,18 @@ def _validate_tracking(tracking):
         raise ExperimentDefinitionError("tracking.completion.value must be a scalar JSON value.")
 
 
+def _validate_graphspace_renderer_config(renderer_config):
+    path = renderer_config.get("path")
+    if path != "/graphspace/index_3.html":
+        raise ExperimentDefinitionError(
+            "renderer_config.path must be /graphspace/index_3.html for GraphSpace experiments."
+        )
+    for field in ("heading", "message"):
+        _non_empty_string(renderer_config.get(field), f"renderer_config.{field}")
+    if "note" in renderer_config:
+        _non_empty_string(renderer_config["note"], "renderer_config.note")
+
+
 def validate_experiment_configuration(configuration):
     """Validate the stable runtime envelope without removing extension fields."""
     if not isinstance(configuration, dict):
@@ -336,6 +348,9 @@ def validate_experiment_configuration(configuration):
         scalar_types = (str, int, float, bool, type(None))
         if any(not isinstance(key, str) or not isinstance(value, scalar_types) for key, value in parameters.items()):
             raise ExperimentDefinitionError("renderer_config.parameters may contain only scalar JSON values.")
+
+    if renderer == "graphspace":
+        _validate_graphspace_renderer_config(renderer_config)
 
     if "tracking" in configuration:
         _validate_tracking(configuration["tracking"])

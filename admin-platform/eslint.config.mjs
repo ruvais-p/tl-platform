@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bundled third-party/static GraphSpace runtime is not application source.
+    "public/graphspace/**",
   ]),
 ]);
 

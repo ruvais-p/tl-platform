@@ -10,11 +10,13 @@ describe("learner proxy allowlist", () => {
     expect(isAllowedLearnerRequest("GET", "me/activity-progress")).toBe(true);
     expect(isAllowedLearnerRequest("POST", `activities/${id}/complete`)).toBe(true);
     expect(isAllowedLearnerRequest("POST", `learning-checks/${id}/submit`)).toBe(true);
+    expect(isAllowedLearnerRequest("POST", `courses/${id}/chat`)).toBe(true);
   });
 
   it("does not expose curriculum mutations or arbitrary backend paths", () => {
     expect(isAllowedLearnerRequest("PATCH", `courses/${id}`)).toBe(false);
     expect(isAllowedLearnerRequest("POST", "courses")).toBe(false);
+    expect(isAllowedLearnerRequest("GET", `courses/${id}/chat`)).toBe(false);
     expect(isAllowedLearnerRequest("GET", "students")).toBe(false);
     expect(isAllowedLearnerRequest("GET", "../../admin")).toBe(false);
   });

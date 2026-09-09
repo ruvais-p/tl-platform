@@ -62,6 +62,7 @@ PERMISSIONS_BY_GROUP = {
         "content.add_practiceset", "content.change_practiceset", "content.view_practiceset",
         "content.add_practiceitem", "content.change_practiceitem", "content.view_practiceitem",
         "media_library.add_mediaasset", "media_library.change_mediaasset", "media_library.view_mediaasset",
+        "tutoring.manage_course_chatbot",
     },
     GroupName.CONTENT_MANAGER: {
         "curriculum.view_program", "curriculum.view_course", "curriculum.view_courseversion",
@@ -74,6 +75,7 @@ PERMISSIONS_BY_GROUP = {
         "content.add_practiceset", "content.change_practiceset", "content.view_practiceset",
         "content.add_practiceitem", "content.change_practiceitem", "content.view_practiceitem",
         "media_library.add_mediaasset", "media_library.change_mediaasset", "media_library.view_mediaasset",
+        "tutoring.manage_course_chatbot",
     },
     GroupName.TEACHER: {
         "accounts.view_user", "curriculum.view_course", "curriculum.view_courseversion",

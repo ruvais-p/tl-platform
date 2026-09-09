@@ -96,7 +96,7 @@ Statuses: `DRAFT`, `IN_REVIEW`, `APPROVED`, `PUBLISHED`, `ARCHIVED`. Publishing 
 
 Multipart uploads are stored through Django's configured storage backend. In the local demo, `public_url` points to Django's development media route; production deployments should use object storage/CDN delivery.
 
-When `configuration.renderer` is present, `schema_version` must be `1`. Installed renderer names are `geogebra` and `placeholder`; unknown extension fields are preserved. A GeoGebra definition requires either `renderer_config.material_id` or a validated `renderer_config.workspace`. The current structured workspace type is `linear_programming`; its posted variable, objective, constraint, and axis data is interpreted by both the Next.js and Moodle adapters. Legacy question-based configuration without a renderer remains accepted but is not mounted by the generic Moodle experiment runner.
+When `configuration.renderer` is present, `schema_version` must be `1`. Installed renderer names are `geogebra`, `graphspace`, and `placeholder`; unknown extension fields are preserved. A GeoGebra definition requires either `renderer_config.material_id` or a validated `renderer_config.workspace`. A GraphSpace definition launches the bundled tool at `/graphspace/index_3.html` and requires administrator-authored `heading` and `message` fields. The current structured GeoGebra workspace type is `linear_programming`; its posted variable, objective, constraint, and axis data is interpreted by both the Next.js and Moodle adapters. Legacy question-based configuration without a renderer remains accepted but is not mounted by the generic Moodle experiment runner.
 
 ## Students and enrollment
 
@@ -136,6 +136,35 @@ Progress is persisted and propagated: `ActivityProgress → SubtopicProgress →
 ```
 
 Percentages must be 0–100. Writes require an active, unexpired, exact-version enrollment and use transactions/row locks. Legacy workshop clients may continue using `POST /progress/` with `activity`, `status`, `extra`, and `event`.
+
+## Course chatbot
+
+Authorized academic/content managers configure one chatbot per exact course version through `GET`/`POST /course-chatbot-configs/` and `GET`/`PATCH`/`PUT /course-chatbot-configs/{id}/`. Filtering by `?course_version={version_id}` is supported. These routes require `tutoring.manage_course_chatbot`; students cannot read them. Enabling requires non-blank `approved_context`, and every saved change increments `context_revision` and invalidates older sessions.
+
+Learner course payloads contain only `chatbot_available`. They never contain the approved context, provider key, prompt, or configuration audit metadata.
+
+An enrolled student sends a turn to `POST /courses/{course_id}/chat/`:
+
+```json
+{"message":"Explain the Pythagorean theorem.","session_id":"<optional-platform-session-uuid>"}
+```
+
+A grounded result has this shape:
+
+```json
+{
+  "session_id":"<platform-session-uuid>",
+  "reply":"For a right triangle, a squared plus b squared equals c squared.",
+  "grounded":true,
+  "citations":[{"chunk_id":"C1","excerpt":"a squared plus b squared equals c squared"}]
+}
+```
+
+The course ID resolves the student's active, unexpired enrollment and its exact published version; clients do not submit a version. Unknown, inaccessible, disabled, mismatched, or stale sessions return `404` without contacting the provider. Unsupported questions and responses that fail exact evidence validation return the configured refusal with `grounded: false`. Provider transport/authentication/malformed-response failures return `503` with error code `TUTOR_UNAVAILABLE`; chat throttling returns `429`.
+
+Django calls the Math Tutor `/api/ask` service with the server-only `MATH_TUTOR_API_KEY`. Configure request, context, provider, history, chunk, timeout, throttle, and retention limits through the `COURSE_CHAT_*` and `MATH_TUTOR_*` environment variables shown in `tella_backend/.env.example`. Do not expose the key through `NEXT_PUBLIC_*`, logs, or browser responses. Rotate it through the backend secret store and restart backend instances.
+
+Chat messages are not grading/progress data. Metadata-only operational logs omit questions, answers, context, prompts, and credentials. Schedule `python manage.py purge_course_chat` at least daily; it deletes sessions and cascade-deletes messages after `COURSE_CHAT_RETENTION_DAYS`. Each provider request sends selected approved context plus bounded recent conversation, so production enablement requires confirmation of the provider's processing, retention, and training terms. The supplied API reference does not define those terms.
 
 ## Assessments
 

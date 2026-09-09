@@ -57,4 +57,28 @@ describe("typed curriculum client", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: { message: "Program must be published." } }, { status: 400 })));
     await expect(curriculumApi.publish("course", "version")).rejects.toThrow("Program must be published.");
   });
+
+  it("loads and saves version-specific chatbot configuration", async () => {
+    const config = {
+      id: "config-1",
+      course_version: "version-1",
+      is_enabled: false,
+      approved_context: "Approved lesson text",
+      context_revision: 1,
+      updated_at: "2026-09-09T00:00:00Z",
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json([config]))
+      .mockResolvedValueOnce(Response.json({ ...config, is_enabled: true, context_revision: 2 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const loaded = await curriculumApi.chatbotConfig("version-1");
+    await curriculumApi.saveChatbotConfig("version-1", loaded, {
+      is_enabled: true,
+      approved_context: "Approved lesson text",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/curriculum/course-chatbot-configs?course_version=version-1", expect.anything());
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/curriculum/course-chatbot-configs/config-1", expect.objectContaining({ method: "PATCH" }));
+  });
 });

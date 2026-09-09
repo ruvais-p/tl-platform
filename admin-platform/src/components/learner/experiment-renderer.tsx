@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CircleAlert, Cloud, ExternalLink, FlaskConical } from "lucide-react";
+import { CircleAlert, Cloud, ExternalLink, FlaskConical, Maximize2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,6 +153,39 @@ function ResponseForm({ fields, state, onStateChange }: { fields: ResponseField[
   );
 }
 
+function GraphSpaceActivity({ activity, experiment, config }: { activity: Activity; experiment: NonNullable<Activity["experiment"]>; config: Record<string, unknown> }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const path = typeof config.path === "string" ? config.path : "/graphspace/index_3.html";
+  const heading = typeof config.heading === "string" ? config.heading : activity.title;
+  const message = typeof config.message === "string" ? config.message : experiment.instructions;
+
+  return (
+    <div className="flex flex-col gap-4" data-workspace="graphspace">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-lg font-semibold tracking-tight">{heading}</h3>
+        <p className="max-w-4xl text-sm leading-6 text-muted-foreground">{message}</p>
+        {typeof config.note === "string" && <p className="text-xs leading-5 text-muted-foreground">{config.note}</p>}
+      </div>
+      <div ref={frame} className="overflow-hidden rounded-xl border bg-background shadow-sm fullscreen:rounded-none fullscreen:border-0">
+        <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-2">
+          <span className="text-xs font-medium text-muted-foreground">GraphSpace workspace</span>
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="sm" onClick={() => void frame.current?.requestFullscreen()}><Maximize2 data-icon="inline-start" />Fullscreen</Button>
+            <Button asChild variant="ghost" size="sm"><a href={path} target="_blank" rel="noreferrer">New tab<ExternalLink data-icon="inline-end" /></a></Button>
+          </div>
+        </div>
+        <iframe
+          src={path}
+          title={heading}
+          loading="lazy"
+          className="h-[72svh] min-h-[620px] w-full border-0 fullscreen:h-screen"
+          sandbox="allow-scripts allow-same-origin allow-downloads allow-modals"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function ExperimentRenderer({ activity, state, onStateChange, onTrackedProgress }: { activity: Activity; state: Record<string, unknown>; onStateChange: (state: Record<string, unknown>) => void; onTrackedProgress: (progress: number, state: Record<string, unknown>, complete: boolean) => void }) {
   const experiment = activity.experiment;
   const definition = experiment ? object(experiment.configuration) : {};
@@ -164,6 +197,7 @@ export function ExperimentRenderer({ activity, state, onStateChange, onTrackedPr
   if (renderer === "geogebra" && object(config.workspace).type === "linear_programming") return <LinearProgrammingWorkspaceView workspaceDefinition={config.workspace} rendererConfig={config} state={state} onStateChange={onStateChange} onProgress={onTrackedProgress} />;
   if (renderer === "geogebra" && object(config.workspace).type === "multivariable_profit") return <MultivariableWorkshopView workspaceDefinition={config.workspace} rendererConfig={config} state={state} onStateChange={onStateChange} onProgress={onTrackedProgress} />;
   if (renderer === "geogebra") return <GeoGebraActivity definition={definition} onProgress={onTrackedProgress} />;
+  if (renderer === "graphspace") return <GraphSpaceActivity activity={activity} experiment={experiment} config={config} />;
   if (renderer === "placeholder") return <Card><CardHeader><CardTitle>{typeof config.heading === "string" ? config.heading : activity.title}</CardTitle><CardDescription>{typeof config.message === "string" ? config.message : experiment.instructions}</CardDescription></CardHeader>{typeof config.note === "string" && <CardContent><Alert><AlertDescription>{config.note}</AlertDescription></Alert></CardContent>}</Card>;
   if (fields.length) return <ResponseForm fields={fields} state={state} onStateChange={onStateChange} />;
   if (experiment.external_url) return <Button asChild variant="outline"><a href={experiment.external_url} target="_blank" rel="noreferrer">Open interactive resource<ExternalLink data-icon="inline-end" /></a></Button>;

@@ -112,6 +112,15 @@ describe("data-driven experiment renderer", () => {
     expect(screen.getByText("Admin supplied note")).toBeDefined();
   });
 
+  it("embeds the bundled GraphSpace workspace without eagerly loading an external page", () => {
+    const view = render(<ExperimentRenderer activity={experiment({ renderer: "graphspace", renderer_config: { path: "/graphspace/index_3.html", heading: "Decision surface", message: "Compare value and risk." } })} state={{}} onStateChange={vi.fn()} onTrackedProgress={vi.fn()} />);
+    const frame = view.container.querySelector("iframe");
+    expect(screen.getByText("Decision surface")).toBeDefined();
+    expect(frame?.getAttribute("src")).toBe("/graphspace/index_3.html");
+    expect(frame?.getAttribute("loading")).toBe("lazy");
+    expect(frame?.getAttribute("sandbox")).not.toContain("allow-top-navigation");
+  });
+
   it("renders an admin-posted linear-programming workspace without a material ID", () => {
     render(<ExperimentRenderer activity={experiment(linearProgrammingConfiguration())} state={{}} onStateChange={vi.fn()} onTrackedProgress={vi.fn()} />);
 

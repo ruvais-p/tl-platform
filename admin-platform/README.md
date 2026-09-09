@@ -23,6 +23,7 @@ Production requests fail clearly when `DJANGO_API_URL` is absent. JWTs remain in
 
 - Permission-aware dashboard and navigation derived from Django’s effective permissions
 - Curriculum workspace for programs, courses, versions, chapters, subtopics, activities, ordering, and publication
+- Per-version course chatbot context and enablement for staff with `tutoring.manage_course_chatbot`
 - Content workspace for activity content, videos, experiments, practice sets, and practice items
 - Media workspace with multipart upload and storage-metadata editing
 - Learner workspace for students, cohorts, memberships, enrollments, assignments, and LMS mappings
@@ -45,6 +46,7 @@ The dedicated Learners → Student groups workspace requires `students.view_stud
 - Data-driven experiment adapters for GeoGebra materials, structured linear-programming workspaces, placeholders, legacy response fields, and future renderer fallbacks
 - Online progress sync, completion, points, badges, and published career opportunities
 - Secure learning-check attempts for all supported question types
+- Context-only course tutor shared across course overview, activity, and learning-check routes when enabled for the enrolled version
 
 No lesson or named experiment is embedded in the frontend. The UI renders published curriculum records and experiment definitions received from Django. See `../docs/STUDENT_FRONTEND.md` for the API mapping and Moodle handoff.
 
