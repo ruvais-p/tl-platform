@@ -29,6 +29,7 @@ from students.views import (
 from workshops.views import (
     StaffWorkshopModelViewSet, WorkshopConfigViewSet, WorkshopModelViewSet,
 )
+from tutoring.views import CourseChatView, CourseChatbotConfigViewSet
 
 router = DefaultRouter()
 router.register(r"programs", ProgramViewSet, basename="program")
@@ -66,6 +67,7 @@ router.register(r"career-opportunities", CareerOpportunityStaffViewSet, basename
 router.register(r"legacy-assessment-attempts", LegacyAssessmentAttemptStaffViewSet, basename="legacy-assessment-attempt")
 router.register(r"workshop-configs", WorkshopConfigViewSet, basename="workshop-config")
 router.register(r"staff-workshop-models", StaffWorkshopModelViewSet, basename="staff-workshop-model")
+router.register(r"course-chatbot-configs", CourseChatbotConfigViewSet, basename="course-chatbot-config")
 
 urlpatterns = [
     path("api/v1/auth/", include("accounts.urls")),
@@ -79,6 +81,7 @@ urlpatterns = [
     path("api/v1/me/activities/<uuid:activity_id>/progress/", MyActivityProgressView.as_view(), name="my_activity_progress"),
     path("api/v1/gamification/me/", GamificationMeView.as_view(), name="gamification_me"),
     path("api/v1/career/opportunities/", CareerOpportunityListView.as_view(), name="career"),
+    path("api/v1/courses/<uuid:course_id>/chat/", CourseChatView.as_view(), name="course-chat"),
     path("api/v1/health/", lambda request: JsonResponse({"ok": True})),
 ]
 if settings.DEBUG:

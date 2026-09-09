@@ -81,19 +81,32 @@ class CourseSerializer(serializers.ModelSerializer):
     program_name = serializers.CharField(source="program.name", read_only=True)
     versions = CourseVersionSerializer(many=True, read_only=True)
     published_version = serializers.SerializerMethodField()
+    chatbot_available = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = (
             "id", "program", "program_name", "name", "code", "description", "thumbnail",
             "status", "display_order", "created_by", "updated_by", "created_at", "updated_at",
-            "versions", "published_version",
+            "versions", "published_version", "chatbot_available",
         )
         read_only_fields = ("created_by", "updated_by", "created_at", "updated_at")
 
     def get_published_version(self, obj):
         version = next((item for item in obj.versions.all() if item.status == "PUBLISHED"), None)
         return CourseVersionSerializer(version, context=self.context).data if version else None
+
+    def get_chatbot_available(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        from tutoring.services import chatbot_available_for
+
+        # The course selector records this once per request, avoiding a group
+        # lookup for every serialized course while remaining false by default.
+        if not getattr(request.user, "_curriculum_is_student", False):
+            return False
+        return chatbot_available_for(student=request.user, course_id=obj.id)
 
 
 class ProgramSerializer(serializers.ModelSerializer):

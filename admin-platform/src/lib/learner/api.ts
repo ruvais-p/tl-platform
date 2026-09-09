@@ -4,6 +4,7 @@ import type {
   AssessmentAttempt,
   CareerOpportunity,
   Course,
+  CourseChatResponse,
   CourseProgress,
   Gamification,
   LearningCheck,
@@ -73,6 +74,10 @@ export const learnerApi = {
   learningCheck: (id: UUID) => request<LearningCheck>(`data/learning-checks/${id}`),
   gamification: () => request<Gamification>("data/gamification/me"),
   opportunities: () => request<CareerOpportunity[]>("data/career/opportunities"),
+  sendCourseChat: (course: UUID, message: string, sessionId?: UUID | null) => request<CourseChatResponse>(`data/courses/${course}/chat`, {
+    method: "POST",
+    body: json({ message, ...(sessionId ? { session_id: sessionId } : {}) }),
+  }),
   startActivity: (id: UUID) => request<ActivityProgress>(`data/activities/${id}/start`, { method: "POST", body: "{}" }),
   saveActivity: (id: UUID, data: { progress_percentage?: number; time_spent_seconds?: number; metadata?: Record<string, unknown> }) => request<ActivityProgress>(`data/activities/${id}/progress`, { method: "POST", body: json(data) }),
   completeActivity: (id: UUID, data: { time_spent_seconds?: number; metadata?: Record<string, unknown> } = {}) => request<ActivityProgress>(`data/activities/${id}/complete`, { method: "POST", body: json(data) }),

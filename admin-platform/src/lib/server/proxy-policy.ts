@@ -3,6 +3,8 @@ const UUID = "[0-9a-fA-F-]{36}";
 
 export function isAllowedProxyRequest(method: string, path: string) {
   const clean = path.replace(/^\/+|\/+$/g, "");
+  if (clean === "course-chatbot-configs") return method === "GET" || method === "POST";
+  if (new RegExp(`^course-chatbot-configs/${UUID}$`).test(clean)) return ["GET", "PATCH", "PUT"].includes(method);
   if (COLLECTIONS.some((name) => clean === name)) return method === "GET" || method === "POST";
   if (COLLECTIONS.some((name) => new RegExp(`^${name}/${UUID}$`).test(clean))) return ["GET", "PATCH", "PUT", "DELETE"].includes(method);
   if (new RegExp(`^courses/${UUID}/publish$`).test(clean)) return method === "POST";

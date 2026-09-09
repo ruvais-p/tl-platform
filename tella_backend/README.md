@@ -33,7 +33,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Set a strong `DJANGO_SECRET_KEY`, PostgreSQL credentials, allowed hosts, CORS origins, JWT lifetimes, and optional Redis/object-storage values in `.env`. Never commit `.env`.
+Set a strong `DJANGO_SECRET_KEY`, PostgreSQL credentials, allowed hosts, CORS origins, JWT lifetimes, and optional Redis/object-storage values in `.env`. Set `MATH_TUTOR_API_KEY` only in the backend secret store; never put it in Next.js variables or commit `.env`. Rotate the provider key before production rollout and restart backend instances after rotation.
 
 ## Database and initial access control
 
@@ -45,6 +45,8 @@ python manage.py createsuperuser
 
 `setup_groups` is safe to run repeatedly. It resolves permissions by `app_label.codename`, never database IDs, and synchronizes each group's permissions.
 The user created by `createsuperuser` can sign in directly to the Next.js staff workspace; Django does not expose an `/admin/` frontend.
+
+Schedule `python manage.py purge_course_chat` at least daily. It deletes chat sessions, including their messages, whose last activity is older than `COURSE_CHAT_RETENTION_DAYS` (30 by default). Curriculum, enrollment, and progress records are unaffected.
 
 ## Run and test
 

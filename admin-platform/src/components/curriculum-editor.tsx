@@ -60,6 +60,7 @@ import type {
 } from "@/lib/curriculum/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./auth-provider";
+import { CourseChatbotPanel } from "./course-chatbot-panel";
 const statuses: Status[] = [
   "DRAFT",
   "IN_REVIEW",
@@ -470,26 +471,34 @@ export function CurriculumEditor({ courseId }: { courseId: string }) {
               onError={setError}
             />
           ) : selected && selection ? (
-            <Inspector
-              course={course}
-              selection={selection}
-              resource={selected}
-              canPublish={Boolean(
-                user?.permissions.includes("curriculum.publish_course"),
+            <>
+              <Inspector
+                course={course}
+                selection={selection}
+                resource={selected}
+                canPublish={Boolean(
+                  user?.permissions.includes("curriculum.publish_course"),
+                )}
+                canEdit={canChange(selection.kind)}
+                onDirty={setDirty}
+                onSaved={async () => {
+                  setDirty(false);
+                  await load(selection);
+                }}
+                onDeleted={async () => {
+                  setDirty(false);
+                  setSelection(null);
+                  await load();
+                }}
+                onError={setError}
+              />
+              {selection.kind === "version" && (
+                <CourseChatbotPanel
+                  version={selected as CourseVersion}
+                  canManage={Boolean(user?.permissions.includes("tutoring.manage_course_chatbot"))}
+                />
               )}
-              canEdit={canChange(selection.kind)}
-              onDirty={setDirty}
-              onSaved={async () => {
-                setDirty(false);
-                await load(selection);
-              }}
-              onDeleted={async () => {
-                setDirty(false);
-                setSelection(null);
-                await load();
-              }}
-              onError={setError}
-            />
+            </>
           ) : (
             <div className="grid min-h-96 place-items-center text-sm text-muted-foreground">
               Select a curriculum item.
@@ -821,7 +830,13 @@ function Inspector({
 }) {
   const initial = JSON.stringify(resource);
   const [version, setVersion] = useState(0);
+  const [status, setStatus] = useState<Status>(resource.status);
   const isActivity = selection.kind === "activity";
+
+  useEffect(() => {
+    setStatus(resource.status);
+  }, [resource.id, resource.status]);
+
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canEdit) return;
@@ -987,8 +1002,12 @@ function Inspector({
             <Select
               name="status"
               items={statusOptions}
-              defaultValue={resource.status}
-              onValueChange={() => canEdit && onDirty(true)}
+              value={status}
+              onValueChange={(value) => {
+                if (!value) return;
+                setStatus(value as Status);
+                if (canEdit) onDirty(true);
+              }}
               required
             >
               <SelectTrigger
@@ -1116,6 +1135,7 @@ function Inspector({
               type="button"
               variant="outline"
               onClick={() => {
+                setStatus(resource.status);
                 setVersion((x) => x + 1);
                 onDirty(false);
               }}

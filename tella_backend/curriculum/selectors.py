@@ -26,6 +26,7 @@ def accessible_courses(user) -> QuerySet[Course]:
 
 def course_structure_queryset(user) -> QuerySet[Course]:
     published_only = is_student(user)
+    user._curriculum_is_student = published_only
     activities = LearningActivity.objects.select_related("content", "experiment").order_by("display_order")
     subtopics = Subtopic.objects.order_by("display_order")
     chapters = Chapter.objects.order_by("display_order")

@@ -2,6 +2,14 @@ import type { Activity, Chapter, Course, CourseVersion, Subtopic, User, UUID } f
 
 export type { Activity, Chapter, Course, CourseVersion, Subtopic, User, UUID };
 
+export type ChatCitation = { chunk_id: string; excerpt: string };
+export type CourseChatResponse = {
+  session_id: UUID;
+  reply: string;
+  grounded: boolean;
+  citations: ChatCitation[];
+};
+
 export type ActivityProgress = {
   id: UUID;
   activity: UUID;

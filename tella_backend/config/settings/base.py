@@ -18,7 +18,7 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes",
     "rest_framework", "rest_framework_simplejwt.token_blacklist", "corsheaders",
-    "accounts", "media_library", "curriculum", "content", "students", "assessments", "workshops", "progress",
+    "accounts", "media_library", "curriculum", "content", "students", "assessments", "workshops", "progress", "tutoring",
 ]
 
 MIDDLEWARE = [
@@ -72,7 +72,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.UserRateThrottle",
     ),
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "user": "300/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "300/min",
+        "course_chat": os.getenv("COURSE_CHAT_THROTTLE_RATE", "10/min"),
+    },
 }
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES", "15"))),
@@ -90,3 +94,18 @@ CACHES = {"default": {
     "LOCATION": "tella-default",
 }}
 REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+
+MATH_TUTOR_API_URL = os.getenv(
+    "MATH_TUTOR_API_URL", "https://math-tutor-api-938810058241.europe-west3.run.app"
+).rstrip("/")
+MATH_TUTOR_API_KEY = os.getenv("MATH_TUTOR_API_KEY", "")
+MATH_TUTOR_TIMEOUT_SECONDS = float(os.getenv("MATH_TUTOR_TIMEOUT_SECONDS", "15"))
+COURSE_CHAT_MESSAGE_MAX_CHARS = int(os.getenv("COURSE_CHAT_MESSAGE_MAX_CHARS", "1000"))
+COURSE_CHAT_CONTEXT_MAX_CHARS = int(os.getenv("COURSE_CHAT_CONTEXT_MAX_CHARS", "24000"))
+COURSE_CHAT_PROVIDER_MAX_CHARS = int(os.getenv("COURSE_CHAT_PROVIDER_MAX_CHARS", "30000"))
+COURSE_CHAT_HISTORY_MESSAGES = int(os.getenv("COURSE_CHAT_HISTORY_MESSAGES", "8"))
+COURSE_CHAT_MAX_CHUNKS = int(os.getenv("COURSE_CHAT_MAX_CHUNKS", "24"))
+COURSE_CHAT_RETENTION_DAYS = int(os.getenv("COURSE_CHAT_RETENTION_DAYS", "30"))
+COURSE_CHAT_REFUSAL = os.getenv(
+    "COURSE_CHAT_REFUSAL", "I can only answer questions covered by this course."
+)

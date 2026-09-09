@@ -11,5 +11,6 @@ export function isAllowedLearnerRequest(method: string, path: string) {
   if (method === "POST" && clean === "progress") return true;
   if (method === "POST" && new RegExp(`^activities/${UUID}/(start|progress|complete)$`).test(clean)) return true;
   if (method === "POST" && new RegExp(`^learning-checks/${UUID}/(start|submit)$`).test(clean)) return true;
+  if (method === "POST" && new RegExp(`^courses/${UUID}/chat$`).test(clean)) return true;
   return false;
 }
