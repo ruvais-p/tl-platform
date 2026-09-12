@@ -233,7 +233,7 @@ export function LearnerActivityView({ courseId, activityId }: { courseId: string
               <ActivityPill activity={activity} />
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock3 className="size-3.5" />{activity.estimated_minutes ? `${activity.estimated_minutes} min` : "Self-paced"}</span>
             </div>
-            <p className="text-xs font-medium text-primary">{location.chapterTitle} · {location.subtopicTitle}</p>
+            <p className="text-xs font-medium text-brand-strong">{location.chapterTitle} · {location.subtopicTitle}</p>
             <CardTitle className="max-w-4xl text-2xl sm:text-3xl">{activity.title}</CardTitle>
             {activity.description && <CardDescription className="max-w-3xl leading-6">{activity.description}</CardDescription>}
             <div className="flex items-center gap-3 pt-3"><ProgressBar value={percent} className="flex-1" label="Activity progress" /><span className="w-10 text-right text-xs font-medium tabular-nums text-muted-foreground">{Math.round(percent)}%</span></div>
@@ -245,7 +245,7 @@ export function LearnerActivityView({ courseId, activityId }: { courseId: string
             {hasExperimentSurface && (
               <section aria-labelledby="experiment-heading" className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-sm font-medium text-primary">Hands-on activity</p>
+                  <p className="text-sm font-medium text-brand-strong">Hands-on activity</p>
                   <h2 id="experiment-heading" className="text-xl font-semibold tracking-tight">Try it yourself</h2>
                   {activity.experiment?.instructions && <p className="text-sm leading-6 text-muted-foreground">{activity.experiment.instructions}</p>}
                 </div>
