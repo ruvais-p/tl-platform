@@ -56,7 +56,7 @@ export function LearnerCourseDetail({ courseId }: { courseId: string }) {
 
       <Card>
         <CardHeader>
-          <p className="mb-2 text-sm font-medium text-primary">
+          <p className="mb-2 text-sm font-medium text-brand-strong">
             {course.program_name}
           </p>
           <CardTitle className="max-w-4xl text-3xl sm:text-4xl">{course.name}</CardTitle>

@@ -104,7 +104,7 @@ export function LearnerDashboard() {
           <section className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,.75fr)]" aria-label="Continue learning">
             <Card>
               <CardHeader>
-                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-primary">
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brand-strong">
                   <BookOpen className="size-4" aria-hidden="true" />
                   Continue learning
                 </p>

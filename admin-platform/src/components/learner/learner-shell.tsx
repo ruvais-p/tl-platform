@@ -66,7 +66,7 @@ function MobileNavigation() {
             href={href}
             className={cn(
               "learner-pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-medium focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-              active ? "text-primary" : "text-muted-foreground",
+              active ? "text-brand-strong" : "text-muted-foreground",
             )}
             aria-current={active ? "page" : undefined}
           >

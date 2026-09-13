@@ -48,7 +48,7 @@ export function PageHeading({
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex min-w-0 flex-col gap-1.5">
-        {eyebrow && <p className="text-sm font-medium text-primary">{eyebrow}</p>}
+        {eyebrow && <p className="text-sm font-medium text-brand-strong">{eyebrow}</p>}
         <h1 className="text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-4xl">{title}</h1>
         {description && <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}
       </div>

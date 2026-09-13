@@ -39,6 +39,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-brand-strong: var(--brand-strong);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -156,29 +157,36 @@
 }
 
 .learner-theme {
-  --background: oklch(0.985 0.003 255);
-  --foreground: oklch(0.205 0.015 255);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.205 0.015 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.205 0.015 255);
-  --primary: oklch(0.5 0.17 257);
-  --primary-foreground: oklch(0.99 0.005 255);
-  --secondary: oklch(0.96 0.007 255);
-  --secondary-foreground: oklch(0.25 0.02 255);
-  --muted: oklch(0.962 0.006 255);
-  --muted-foreground: oklch(0.5 0.02 255);
-  --accent: oklch(0.95 0.018 255);
-  --accent-foreground: oklch(0.32 0.08 257);
-  --border: oklch(0.88 0.01 255 / 72%);
-  --input: oklch(0.88 0.01 255);
-  --ring: oklch(0.58 0.14 257);
-  --success: oklch(0.58 0.11 164);
-  --success-foreground: oklch(0.99 0.01 164);
+  --font-sans: var(--font-poppins), Arial, sans-serif;
+  --background: #f8fbfc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #3ab664;
+  --primary-foreground: #0f172a;
+  --secondary: #66d2e3;
+  --secondary-foreground: #0f172a;
+  --muted: #edf7fa;
+  --muted-foreground: #52616b;
+  --accent: #b5e5f8;
+  --accent-foreground: #0f172a;
+  --brand-strong: #237a45;
+  --border: #cde3e9;
+  --input: #b6d4dc;
+  --ring: #237a45;
+  --success: #237a45;
+  --success-foreground: #ffffff;
   --warning: oklch(0.75 0.11 78);
   --warning-foreground: oklch(0.27 0.05 68);
+  --chart-1: #3ab664;
+  --chart-2: #66d2e3;
+  --chart-3: #b5e5f8;
+  --chart-4: #237a45;
   --radius: 0.75rem;
   min-height: 100%;
+  font-family: var(--font-sans);
   font-synthesis: none;
   font-feature-settings: "calt" 1, "ss02" 1;
 }
@@ -189,6 +197,11 @@
 
 .learner-theme [data-slot="button"]:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.learner-theme :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .learner-theme [data-slot="progress-indicator"] {

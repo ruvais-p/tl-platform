@@ -29,8 +29,8 @@ function QuestionInput({ item, value, onChange, promptId }: { item: LearningChec
         {question.options.map((option) => {
           const selected = value === option.id;
           return (
-            <label key={option.id} className={cn("learner-pressable flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5", selected ? "border-primary/45 bg-primary/5" : "bg-background hover:bg-muted/55")}>
-              <input type="radio" name={`question-${question.id}`} value={option.id} checked={selected} onChange={() => onChange(option.id)} className="mt-0.5 size-4 accent-primary" />
+            <label key={option.id} className={cn("learner-pressable flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5", selected ? "border-brand-strong/45 bg-accent" : "bg-background hover:bg-muted/55")}>
+              <input type="radio" name={`question-${question.id}`} value={option.id} checked={selected} onChange={() => onChange(option.id)} className="mt-0.5 size-4 accent-brand-strong" />
               <span>{option.option_text}</span>
             </label>
           );
@@ -45,8 +45,8 @@ function QuestionInput({ item, value, onChange, promptId }: { item: LearningChec
         {question.options.map((option) => {
           const checked = selected.includes(option.id);
           return (
-            <label key={option.id} className={cn("learner-pressable flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5", checked ? "border-primary/45 bg-primary/5" : "bg-background hover:bg-muted/55")}>
-              <input type="checkbox" value={option.id} checked={checked} onChange={() => onChange(checked ? selected.filter((id) => id !== option.id) : [...selected, option.id])} className="mt-0.5 size-4 rounded accent-primary" />
+            <label key={option.id} className={cn("learner-pressable flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5", checked ? "border-brand-strong/45 bg-accent" : "bg-background hover:bg-muted/55")}>
+              <input type="checkbox" value={option.id} checked={checked} onChange={() => onChange(checked ? selected.filter((id) => id !== option.id) : [...selected, option.id])} className="mt-0.5 size-4 rounded accent-brand-strong" />
               <span>{option.option_text}</span>
             </label>
           );
@@ -120,7 +120,7 @@ export function LearningCheckView({ courseId, checkId }: { courseId: string; che
         <Button asChild variant="ghost" className="self-start"><Link href={`/learn/courses/${courseId}`}><ArrowLeft data-icon="inline-start" />Back to course</Link></Button>
         <Card>
           <CardHeader>
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-primary">
+            <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brand-strong">
               <BookOpenCheck className="size-4" aria-hidden="true" />
               Learning check
             </p>
@@ -169,7 +169,7 @@ export function LearningCheckView({ courseId, checkId }: { courseId: string; che
       </div>
       <Card>
         <CardHeader>
-          <p className="mb-2 text-sm font-medium text-primary">Knowledge check</p>
+          <p className="mb-2 text-sm font-medium text-brand-strong">Knowledge check</p>
           <CardTitle className="text-2xl sm:text-3xl">{check.title}</CardTitle>
           <CardDescription className="flex flex-wrap gap-4">
             <span className="inline-flex items-center gap-1.5"><BookOpenCheck className="size-3.5" />{orderedQuestions.length} questions</span>
