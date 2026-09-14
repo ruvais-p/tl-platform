@@ -9,10 +9,17 @@ async function handle(request: Request, context: { params: Promise<{ path: strin
     return Response.json({ detail: "Unsupported learner route." }, { status: 404 });
   }
   const query = new URL(request.url).search;
-  const body = ["GET", "HEAD"].includes(request.method) ? undefined : await request.text();
+  const contentType = request.headers.get("content-type");
+  const headers = contentType ? { "content-type": contentType } : undefined;
+  const body = ["GET", "HEAD"].includes(request.method)
+    ? undefined
+    : contentType?.startsWith("multipart/form-data")
+      ? await request.arrayBuffer()
+      : await request.text();
   return forwardResponse(await learnerDjangoRequest(`${resourcePath}/${query}`, {
     method: request.method,
     body,
+    headers,
   }));
 }
 

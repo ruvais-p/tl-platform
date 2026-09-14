@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Sofia Learning Platform",
+    template: "%s · Sofia",
+  },
+  description: "Curriculum-connected skill enhancement for business management students",
+};
 
 const poppins = Poppins({
   variable: "--font-poppins",

@@ -33,6 +33,14 @@ fi
 export DJANGO_API_URL="${DJANGO_API_URL:-http://127.0.0.1:8000/api/v1}"
 export ADMIN_SECURE_COOKIES="${ADMIN_SECURE_COOKIES:-false}"
 
+echo "Preparing Django database..."
+(
+  cd "$BACKEND_DIR"
+  "$PYTHON" manage.py migrate --noinput
+  "$PYTHON" manage.py setup_groups
+  "$PYTHON" manage.py check
+)
+
 BACKEND_PID=""
 FRONTEND_PID=""
 

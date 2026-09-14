@@ -1,6 +1,8 @@
 import type { Activity, Chapter, Course, CourseVersion, Subtopic, User, UUID } from "@/lib/curriculum/types";
+import type { LearnerApplication, LearnerOpportunity } from "@/lib/opportunities/types";
 
 export type { Activity, Chapter, Course, CourseVersion, Subtopic, User, UUID };
+export type { LearnerApplication };
 
 export type ChatCitation = { chunk_id: string; excerpt: string };
 export type CourseChatResponse = {
@@ -72,13 +74,7 @@ export type Gamification = {
   badges: Array<{ id: UUID; code: string; label: string; created_at: string }>;
 };
 
-export type CareerOpportunity = {
-  id: UUID;
-  title: string;
-  kind: string;
-  summary: string;
-  url: string;
-};
+export type CareerOpportunity = LearnerOpportunity;
 
 export type QuestionOption = {
   id: UUID;

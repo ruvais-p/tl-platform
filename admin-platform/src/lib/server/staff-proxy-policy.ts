@@ -91,6 +91,16 @@ export function isAllowedStaffProxyRequest(method: string, path: string) {
     return method === "POST";
   if (new RegExp(`^subtopics/${UUID}/reorder_activities$`).test(clean))
     return method === "POST";
+  if (new RegExp(`^career-opportunities/${UUID}/(publish|close|archive)$`).test(clean))
+    return method === "POST";
+  if (clean === "opportunity-applications") return method === "GET";
+  if (matchesDetail(clean, "opportunity-applications")) return method === "GET";
+  if (new RegExp(`^opportunity-applications/${UUID}/transition$`).test(clean))
+    return method === "POST";
+  if (new RegExp(`^opportunity-applications/${UUID}/review_note$`).test(clean))
+    return method === "PATCH";
+  if (new RegExp(`^opportunity-applications/${UUID}/resume$`).test(clean))
+    return method === "GET";
 
   return false;
 }

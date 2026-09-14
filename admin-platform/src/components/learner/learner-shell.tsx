@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, BriefcaseBusiness, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, ChevronDown, ClipboardList, LayoutDashboard, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ const nav = [
   { href: "/learn", label: "Overview", icon: LayoutDashboard },
   { href: "/learn/courses", label: "Courses", icon: BookOpen },
   { href: "/learn/opportunities", label: "Opportunities", icon: BriefcaseBusiness },
+  { href: "/learn/applications", label: "Applications", icon: ClipboardList },
 ];
 
 function isCurrent(pathname: string, href: string) {
@@ -57,7 +58,7 @@ function DesktopNavigation() {
 function MobileNavigation() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Learner navigation" className="fixed inset-x-0 bottom-0 grid grid-cols-3 border-t bg-background/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_30px_oklch(0.2_0.02_255/.05)] backdrop-blur-xl md:hidden">
+    <nav aria-label="Learner navigation" className="fixed inset-x-0 bottom-0 grid grid-cols-4 border-t bg-background/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_30px_oklch(0.2_0.02_255/.05)] backdrop-blur-xl md:hidden">
       {nav.map(({ href, label, icon: Icon }) => {
         const active = isCurrent(pathname, href);
         return (

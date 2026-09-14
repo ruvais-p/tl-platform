@@ -20,4 +20,17 @@ describe("learner proxy allowlist", () => {
     expect(isAllowedLearnerRequest("GET", "students")).toBe(false);
     expect(isAllowedLearnerRequest("GET", "../../admin")).toBe(false);
   });
+
+  it("allows only the required opportunity and application methods", () => {
+    expect(isAllowedLearnerRequest("GET", "career/opportunities")).toBe(true);
+    expect(isAllowedLearnerRequest("GET", `career/opportunities/${id}`)).toBe(true);
+    expect(isAllowedLearnerRequest("POST", `career/opportunities/${id}/applications`)).toBe(true);
+    expect(isAllowedLearnerRequest("GET", "career/applications/me")).toBe(true);
+    expect(isAllowedLearnerRequest("POST", `career/applications/${id}/withdraw`)).toBe(true);
+    expect(isAllowedLearnerRequest("GET", `career/applications/${id}/resume`)).toBe(true);
+
+    expect(isAllowedLearnerRequest("PATCH", `career/opportunities/${id}`)).toBe(false);
+    expect(isAllowedLearnerRequest("POST", `career/applications/${id}/resume`)).toBe(false);
+    expect(isAllowedLearnerRequest("GET", "career/opportunities/------------------------------------")).toBe(false);
+  });
 });

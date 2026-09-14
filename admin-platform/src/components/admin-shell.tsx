@@ -40,8 +40,14 @@ type NavigationItem = {
   permissions?: string[];
 };
 
-const navigation: NavigationItem[] = [
+export const navigation: NavigationItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  {
+    href: "/opportunities",
+    label: "Opportunities",
+    icon: BriefcaseBusiness,
+    permissions: ["progress.view_careeropportunity"],
+  },
   {
     href: "/courses",
     label: "Curriculum",
@@ -115,7 +121,7 @@ const navigation: NavigationItem[] = [
   },
 ];
 
-function canSee(item: NavigationItem, permissions: string[]) {
+export function canSee(item: NavigationItem, permissions: string[]) {
   return (
     !item.permissions ||
     item.permissions.some((permission) => permissions.includes(permission))

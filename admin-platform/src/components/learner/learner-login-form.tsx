@@ -37,7 +37,7 @@ export function LearnerLoginForm() {
   return (
     <main className="learner-theme grid min-h-screen place-items-center bg-background px-4 py-10 sm:px-6">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center"><LearnerBrand /></div>
+        <div className="mb-8 flex justify-center"><LearnerBrand markClassName="w-52" /></div>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Welcome back</CardTitle>

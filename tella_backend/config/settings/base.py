@@ -58,6 +58,9 @@ USE_I18N = True
 USE_TZ = True
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+PRIVATE_DOCUMENT_ROOT = Path(
+    os.getenv("PRIVATE_DOCUMENT_ROOT", BASE_DIR / "private_documents")
+)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MOODLE_ORIGIN = os.getenv("MOODLE_ORIGIN", "http://localhost:8080")

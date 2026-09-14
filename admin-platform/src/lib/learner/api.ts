@@ -8,11 +8,13 @@ import type {
   CourseProgress,
   Gamification,
   LearningCheck,
+  LearnerApplication,
   MediaAsset,
   User,
   UUID,
   Video,
 } from "./types";
+import type { EmploymentType, WorkplaceMode } from "@/lib/opportunities/types";
 
 function errorMessage(body: ApiErrorBody, status: number) {
   if (body.error?.message) return body.error.message;
@@ -30,10 +32,11 @@ export class LearnerApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isForm = init?.body instanceof FormData;
   const response = await fetch(`/api/learner/${path}`, {
     ...init,
     headers: {
-      ...(init?.body ? { "content-type": "application/json" } : {}),
+      ...(init?.body && !isForm ? { "content-type": "application/json" } : {}),
       ...init?.headers,
     },
   });
@@ -43,6 +46,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new LearnerApiError(response.status, body);
   }
   return (response.status === 204 ? undefined : await response.json()) as T;
+}
+
+async function download(path: string) {
+  const response = await fetch(`/api/learner/${path}`);
+  if (!response.ok) throw new LearnerApiError(response.status, {});
+  return response.blob();
 }
 
 const json = (value: unknown) => JSON.stringify(value);
@@ -73,7 +82,22 @@ export const learnerApi = {
   learningChecks: () => request<LearningCheck[]>("data/learning-checks"),
   learningCheck: (id: UUID) => request<LearningCheck>(`data/learning-checks/${id}`),
   gamification: () => request<Gamification>("data/gamification/me"),
-  opportunities: () => request<CareerOpportunity[]>("data/career/opportunities"),
+  opportunities: (filters: { search?: string; employment_type?: EmploymentType; workplace_mode?: WorkplaceMode } = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+    return request<CareerOpportunity[]>(`data/career/opportunities${params.size ? `?${params}` : ""}`);
+  },
+  opportunity: (id: UUID) => request<CareerOpportunity>(`data/career/opportunities/${id}`),
+  apply: (id: UUID, data: { contact_phone: string; cover_note?: string; resume?: File }) => {
+    const form = new FormData();
+    form.set("contact_phone", data.contact_phone);
+    if (data.cover_note) form.set("cover_note", data.cover_note);
+    if (data.resume) form.set("resume", data.resume);
+    return request<LearnerApplication>(`data/career/opportunities/${id}/applications`, { method: "POST", body: form });
+  },
+  applications: () => request<LearnerApplication[]>("data/career/applications/me"),
+  withdrawApplication: (id: UUID) => request<LearnerApplication>(`data/career/applications/${id}/withdraw`, { method: "POST", body: "{}" }),
+  applicationResume: (id: UUID) => download(`data/career/applications/${id}/resume`),
   sendCourseChat: (course: UUID, message: string, sessionId?: UUID | null) => request<CourseChatResponse>(`data/courses/${course}/chat`, {
     method: "POST",
     body: json({ message, ...(sessionId ? { session_id: sessionId } : {}) }),
