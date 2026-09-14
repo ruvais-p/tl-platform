@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { learnerAuthApi, LearnerApiError } from "@/lib/learner/api";
 import { LearnerBrand } from "./brand";
+import { auth0LoginUrl, safeContinuation } from "@/lib/auth/continuation";
 
-export function LearnerLoginForm() {
+export function LearnerLoginForm({ auth0Available = false }: { auth0Available?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const params = useSearchParams();
+  const providerError = params.get("auth0_error")
+    ? "Auth0 sign-in could not be completed. You can retry or use your email and password."
+    : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,8 +29,7 @@ export function LearnerLoginForm() {
     const form = new FormData(event.currentTarget);
     try {
       await learnerAuthApi.login(String(form.get("email")), String(form.get("password")));
-      const next = params.get("next");
-      router.replace(next?.startsWith("/learn") ? next : "/learn");
+      router.replace(safeContinuation("learner", params.get("next")));
     } catch (caught) {
       setError(caught instanceof LearnerApiError ? caught.message : "The learning service is unavailable. Please try again.");
     } finally {
@@ -44,6 +47,22 @@ export function LearnerLoginForm() {
             <CardDescription>Sign in to continue the learning assigned by your institution.</CardDescription>
           </CardHeader>
           <CardContent>
+            {auth0Available && (
+              <>
+                <Button asChild type="button" size="lg" variant="outline" className="w-full">
+                  <a href={auth0LoginUrl("learner", params.get("next"))}>
+                    <ShieldCheck data-icon="inline-start" />
+                    Continue with Auth0
+                  </a>
+                </Button>
+                <div className="my-5 flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">or</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
+            {providerError && !error && <Alert variant="destructive" role="alert" className="mb-5"><AlertDescription>{providerError}</AlertDescription></Alert>}
             <form id="learner-login" className="flex flex-col gap-5" onSubmit={submit}>
               <FieldGroup>
                 <Field>

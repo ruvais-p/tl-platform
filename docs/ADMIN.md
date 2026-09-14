@@ -1,5 +1,7 @@
 # Moodle administrator notes
 
+For optional Auth0 login alongside the existing staff and learner email/password forms, see [Auth0 setup](AUTH0.md).
+
 ## Install the local plugin
 
 1. Copy `local/tella_workshop` into the Moodle `local/` directory (already present in this checkout).

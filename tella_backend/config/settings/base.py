@@ -65,6 +65,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MOODLE_ORIGIN = os.getenv("MOODLE_ORIGIN", "http://localhost:8080")
 MOODLE_SSO_SECRET = os.getenv("MOODLE_SSO_SECRET", "")
+AUTH0_ENABLED = os.getenv("AUTH0_ENABLED", "false").strip().lower() == "true"
+AUTH0_ISSUER = os.getenv("AUTH0_ISSUER", "").strip().rstrip("/")
+if AUTH0_ISSUER:
+    AUTH0_ISSUER += "/"
+AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "").strip()
+AUTH0_ALGORITHM = os.getenv("AUTH0_ALGORITHM", "RS256").strip()
+AUTH0_EMAIL_CLAIM = os.getenv("AUTH0_EMAIL_CLAIM", "https://tella.systems/email").strip()
+AUTH0_EMAIL_VERIFIED_CLAIM = os.getenv(
+    "AUTH0_EMAIL_VERIFIED_CLAIM", "https://tella.systems/email_verified"
+).strip()
+AUTH0_JWKS_CACHE_SECONDS = int(os.getenv("AUTH0_JWKS_CACHE_SECONDS", "300"))
+AUTH0_HTTP_TIMEOUT_SECONDS = float(os.getenv("AUTH0_HTTP_TIMEOUT_SECONDS", "5"))
 CORS_ALLOWED_ORIGINS = [v.strip() for v in os.getenv("CORS_ALLOWED_ORIGINS", MOODLE_ORIGIN).split(",") if v.strip()]
 CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
 
@@ -78,6 +90,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
         "user": "300/min",
+        "auth0_exchange": os.getenv("AUTH0_EXCHANGE_THROTTLE_RATE", "10/min"),
         "course_chat": os.getenv("COURSE_CHAT_THROTTLE_RATE", "10/min"),
     },
 }

@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import time
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -10,12 +11,14 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .permissions import CanManagePermissions, CanManageUsers, active_permission_queryset
 from .serializers import (
+    Auth0ExchangeSerializer,
     EmailTokenObtainPairSerializer,
     ManagedUserSerializer,
     PermissionSerializer,
@@ -25,11 +28,56 @@ from .serializers import (
 )
 from .constants import GroupName
 from .models import User
+from .admission import portal_admission
+from .auth0 import Auth0AdmissionError, Auth0VerificationError, exchange_auth0_assertion
 from students.models import ExternalUserMapping
 
 
 class LoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
+
+
+def token_pair_for_user(user, auth_method: str):
+    refresh = RefreshToken.for_user(user)
+    refresh["email"] = user.email
+    refresh["groups"] = list(user.groups.values_list("name", flat=True))
+    refresh["auth_method"] = auth_method
+    return {"access": str(refresh.access_token), "refresh": str(refresh)}
+
+
+class Auth0ExchangeView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth0_exchange"
+
+    def post(self, request):
+        serializer = Auth0ExchangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        correlation_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        try:
+            user = exchange_auth0_assertion(
+                serializer.validated_data["assertion"],
+                correlation_id=correlation_id,
+            )
+        except Auth0VerificationError:
+            return Response(
+                {"detail": "Unable to complete sign in."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except Auth0AdmissionError:
+            return Response(
+                {"detail": "This account cannot access the requested workspace."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not portal_admission(user, serializer.validated_data["portal"]).allowed:
+            return Response(
+                {"detail": "This account cannot access the requested workspace."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response({
+            **token_pair_for_user(user, "auth0"),
+            "user": UserSerializer(user).data,
+        })
 
 
 class MeView(APIView):
@@ -40,7 +88,7 @@ class MeView(APIView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         refresh_token = request.data.get("refresh")
@@ -93,8 +141,8 @@ class MoodleExchangeView(APIView):
         )
         student_group, _ = Group.objects.get_or_create(name=GroupName.STUDENT)
         user.groups.add(student_group)
-        refresh = RefreshToken.for_user(user)
-        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "user": UserSerializer(user).data})
+        tokens = token_pair_for_user(user, "moodle")
+        return Response({**tokens, "user": UserSerializer(user).data})
 
 
 class ManagedUserViewSet(
@@ -109,7 +157,9 @@ class ManagedUserViewSet(
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def get_queryset(self):
-        queryset = User.objects.prefetch_related("groups", "user_permissions").order_by("email")
+        queryset = User.objects.prefetch_related(
+            "groups", "user_permissions", "auth0_identities"
+        ).order_by("email")
         query = self.request.query_params.get("q", "").strip()
         if query:
             queryset = queryset.filter(

@@ -2,23 +2,27 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User
+from .models import Auth0Identity, User
 from .permissions import active_permission_queryset, filter_active_permission_keys
 from .services import create_managed_user, update_managed_user
+from .admission import PORTALS, portal_admission
 
 
 class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(read_only=True)
     groups = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
+    portal_access = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             "id", "email", "username", "first_name", "last_name", "display_name",
             "is_active", "is_superuser", "date_joined", "groups", "permissions",
+            "portal_access",
         )
         read_only_fields = ("is_superuser",)
 
@@ -28,16 +32,46 @@ class UserSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj) -> list[str]:
         return filter_active_permission_keys(obj.get_all_permissions())
 
+    def get_portal_access(self, obj) -> dict[str, bool]:
+        return {
+            "staff": portal_admission(obj, "staff").allowed,
+            "learner": portal_admission(obj, "learner").allowed,
+        }
+
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = User.USERNAME_FIELD
+    portal = serializers.ChoiceField(choices=sorted(PORTALS), required=False, write_only=True)
+
+    def validate(self, attrs):
+        portal = attrs.pop("portal", None)
+        result = super().validate(attrs)
+        if portal and not portal_admission(self.user, portal).allowed:
+            raise PermissionDenied("This account cannot access the requested workspace.")
+        return result
 
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token["email"] = user.email
         token["groups"] = list(user.groups.values_list("name", flat=True))
+        token["auth_method"] = "password"
         return token
+
+
+class Auth0ExchangeSerializer(serializers.Serializer):
+    assertion = serializers.CharField(write_only=True, trim_whitespace=False)
+    portal = serializers.ChoiceField(choices=sorted(PORTALS))
+
+
+class Auth0IdentitySummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Auth0Identity
+        fields = (
+            "id", "issuer", "subject", "email_at_link_time",
+            "created_at", "last_authenticated_at",
+        )
+        read_only_fields = fields
 
 
 class ManagedUserSerializer(serializers.ModelSerializer):
@@ -50,12 +84,14 @@ class ManagedUserSerializer(serializers.ModelSerializer):
     )
     display_name = serializers.CharField(read_only=True)
     permissions = serializers.SerializerMethodField()
+    auth0_identities = Auth0IdentitySummarySerializer(many=True, read_only=True)
 
     class Meta:
         model = User
         fields = (
             "id", "email", "username", "first_name", "last_name", "display_name",
             "password", "is_active", "date_joined", "groups", "permissions",
+            "auth0_identities",
         )
         read_only_fields = ("id", "date_joined", "display_name", "permissions")
 

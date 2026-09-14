@@ -20,6 +20,6 @@ export async function POST(request: Request) {
     await clearLearnerSession();
     return Response.json({ detail: "The Moodle account is not enrolled as a learner." }, { status: 403 });
   }
-  await setLearnerSession({ access: payload.access, refresh: payload.refresh });
+  await setLearnerSession({ access: payload.access, refresh: payload.refresh }, "moodle");
   return Response.json({ ok: true, user: payload.user });
 }

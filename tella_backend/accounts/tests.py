@@ -69,6 +69,13 @@ class AuthenticationApiTests(TestCase):
         response = self.client.post(reverse("accounts:logout"), {"refresh": login["refresh"]}, format="json")
         self.assertEqual(response.status_code, 204)
 
+    def test_logout_blacklists_refresh_without_access_credentials(self):
+        login = self.login().data
+        jti = str(RefreshToken(login["refresh"])["jti"])
+        response = self.client.post(reverse("accounts:logout"), {"refresh": login["refresh"]}, format="json")
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(BlacklistedToken.objects.filter(token__jti=jti).exists())
+
     def test_me_returns_groups_and_permissions(self):
         login = self.login().data
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {login['access']}")

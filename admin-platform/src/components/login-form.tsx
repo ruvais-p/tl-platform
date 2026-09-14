@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,12 +18,16 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiError, authApi } from "@/lib/curriculum/api";
+import { auth0LoginUrl, safeContinuation } from "@/lib/auth/continuation";
 
-export function LoginForm() {
+export function LoginForm({ auth0Available = false }: { auth0Available?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const params = useSearchParams();
+  const providerError = params.get("auth0_error")
+    ? "Auth0 sign-in could not be completed. You can retry or use your email and password."
+    : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +39,7 @@ export function LoginForm() {
         String(data.get("email")),
         String(data.get("password")),
       );
-      router.replace(params.get("next") || "/dashboard");
+      router.replace(safeContinuation("staff", params.get("next")));
     } catch (caught) {
       setError(
         caught instanceof ApiError
@@ -70,6 +74,26 @@ export function LoginForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {auth0Available && (
+              <>
+                <Button asChild type="button" size="lg" variant="outline" className="w-full">
+                  <a href={auth0LoginUrl("staff", params.get("next"))}>
+                    <ShieldCheck data-icon="inline-start" />
+                    Continue with Auth0
+                  </a>
+                </Button>
+                <div className="my-5 flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">or</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
+            {providerError && !error && (
+              <Alert variant="destructive" role="alert" className="mb-5">
+                <AlertDescription>{providerError}</AlertDescription>
+              </Alert>
+            )}
             <form
               aria-busy={busy}
               className="flex flex-col gap-5"

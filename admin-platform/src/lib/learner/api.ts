@@ -62,7 +62,7 @@ export const learnerAuthApi = {
     method: "POST",
     body: json({ email, password }),
   }),
-  logout: () => request<void>("auth/logout", { method: "POST" }),
+  logout: () => request<{ redirect_to: string; auth0: boolean }>("auth/logout", { method: "POST" }),
 };
 
 export const learnerApi = {

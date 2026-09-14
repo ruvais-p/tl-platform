@@ -16,18 +16,20 @@ describe("admin session", () => {
   it("stores successful admin login tokens in HTTP-only cookies", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
-      .mockResolvedValueOnce(Response.json({ groups: ["ADMIN"] })));
+      .mockResolvedValueOnce(Response.json({ groups: ["ADMIN"], portal_access: { staff: true, learner: false } })));
     const { POST } = await import("@/app/api/auth/login/route");
     const response = await POST(new Request("http://admin/api/auth/login", { method: "POST", body: JSON.stringify({ email: "a@b.com", password: "secret" }) }));
     expect(response.status).toBe(200);
     expect(cookieStore.set).toHaveBeenCalledWith("tella_admin_access", "access", expect.objectContaining({ httpOnly: true }));
     expect(values.get("tella_admin_refresh")).toBe("refresh");
+    expect(values.get("tella_admin_auth_method")).toBe("password");
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body))).toEqual({ email: "a@b.com", password: "secret", portal: "staff" });
   });
 
   it("rejects a valid non-admin account and clears tokens", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
-      .mockResolvedValueOnce(Response.json({ groups: ["STUDENT"] })));
+      .mockResolvedValueOnce(Response.json({ groups: ["STUDENT"], portal_access: { staff: false, learner: true } })));
     const { POST } = await import("@/app/api/auth/login/route");
     const response = await POST(new Request("http://admin/api/auth/login", { method: "POST", body: "{}" }));
     expect(response.status).toBe(403);
@@ -62,7 +64,7 @@ describe("admin session", () => {
   it("accepts a Django superuser without requiring a role assignment", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
-      .mockResolvedValueOnce(Response.json({ groups: [], is_superuser: true })));
+      .mockResolvedValueOnce(Response.json({ groups: [], is_superuser: true, portal_access: { staff: true, learner: false } })));
     const { POST } = await import("@/app/api/auth/login/route");
     const response = await POST(new Request("http://admin/api/auth/login", { method: "POST", body: "{}" }));
     expect(response.status).toBe(200);
@@ -72,7 +74,7 @@ describe("admin session", () => {
   it("keeps learner tokens separate from the administration session", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(Response.json({ access: "learner-access", refresh: "learner-refresh" }))
-      .mockResolvedValueOnce(Response.json({ groups: ["STUDENT"] })));
+      .mockResolvedValueOnce(Response.json({ groups: ["STUDENT"], portal_access: { staff: false, learner: true } })));
     const { POST } = await import("@/app/api/learner/auth/login/route");
 
     const response = await POST(new Request("http://tella/api/learner/auth/login", {
@@ -83,13 +85,15 @@ describe("admin session", () => {
     expect(response.status).toBe(200);
     expect(values.get("tella_learner_access")).toBe("learner-access");
     expect(values.get("tella_learner_refresh")).toBe("learner-refresh");
+    expect(values.get("tella_learner_auth_method")).toBe("password");
     expect(values.has("tella_admin_access")).toBe(false);
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body))).toEqual({ email: "learner@example.com", password: "secret", portal: "learner" });
   });
 
   it("rejects a valid account without the student role from the learner workspace", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(Response.json({ access: "access", refresh: "refresh" }))
-      .mockResolvedValueOnce(Response.json({ groups: ["CONTENT_MANAGER"] })));
+      .mockResolvedValueOnce(Response.json({ groups: ["CONTENT_MANAGER"], portal_access: { staff: true, learner: false } })));
     const { POST } = await import("@/app/api/learner/auth/login/route");
 
     const response = await POST(new Request("http://tella/api/learner/auth/login", { method: "POST", body: "{}" }));
