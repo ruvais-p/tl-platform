@@ -16,6 +16,10 @@ export function isAllowedLearnerRequest(method: string, path: string) {
   if (method === "POST" && new RegExp(`^activities/${UUID}/(start|progress|complete)$`).test(clean)) return true;
   if (method === "POST" && new RegExp(`^learning-checks/${UUID}/(start|submit)$`).test(clean)) return true;
   if (method === "POST" && new RegExp(`^courses/${UUID}/chat$`).test(clean)) return true;
+  if (["GET", "POST"].includes(method) && new RegExp(`^courses/${UUID}/support-conversation$`).test(clean)) return true;
+  if (method === "GET" && new RegExp(`^course-support/conversations/${UUID}/messages$`).test(clean)) return true;
+  if (method === "POST" && new RegExp(`^course-support/conversations/${UUID}/read$`).test(clean)) return true;
+  if (method === "POST" && clean === "course-support/socket-ticket") return true;
   if (method === "POST" && new RegExp(`^career/opportunities/${UUID}/applications$`).test(clean)) return true;
   if (method === "POST" && new RegExp(`^career/applications/${UUID}/withdraw$`).test(clean)) return true;
   return false;

@@ -16,7 +16,7 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
-    "django.contrib.auth", "django.contrib.contenttypes",
+    "daphne", "django.contrib.auth", "django.contrib.contenttypes",
     "rest_framework", "rest_framework_simplejwt.token_blacklist", "corsheaders",
     "accounts", "media_library", "curriculum", "content", "students", "assessments", "workshops", "progress", "tutoring",
 ]
@@ -80,6 +80,26 @@ AUTH0_HTTP_TIMEOUT_SECONDS = float(os.getenv("AUTH0_HTTP_TIMEOUT_SECONDS", "5"))
 CORS_ALLOWED_ORIGINS = [v.strip() for v in os.getenv("CORS_ALLOWED_ORIGINS", MOODLE_ORIGIN).split(",") if v.strip()]
 CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
 
+COURSE_SUPPORT_CHAT_ENABLED = os.getenv("COURSE_SUPPORT_CHAT_ENABLED", "false").strip().lower() == "true"
+COURSE_SUPPORT_CHAT_MESSAGE_MAX_CHARS = int(os.getenv("COURSE_SUPPORT_CHAT_MESSAGE_MAX_CHARS", "2000"))
+COURSE_SUPPORT_CHAT_EVENT_MAX_BYTES = int(os.getenv("COURSE_SUPPORT_CHAT_EVENT_MAX_BYTES", "65536"))
+COURSE_SUPPORT_CHAT_HISTORY_PAGE_SIZE = int(os.getenv("COURSE_SUPPORT_CHAT_HISTORY_PAGE_SIZE", "50"))
+COURSE_SUPPORT_CHAT_SEND_RATE = os.getenv("COURSE_SUPPORT_CHAT_SEND_RATE", "20/min")
+COURSE_SUPPORT_CHAT_CONNECTION_RATE = os.getenv("COURSE_SUPPORT_CHAT_CONNECTION_RATE", "10/min")
+COURSE_SUPPORT_CHAT_MAX_CONNECTIONS_PER_USER = int(os.getenv("COURSE_SUPPORT_CHAT_MAX_CONNECTIONS_PER_USER", "5"))
+COURSE_SUPPORT_CHAT_TICKET_TTL_SECONDS = int(os.getenv("COURSE_SUPPORT_CHAT_TICKET_TTL_SECONDS", "30"))
+COURSE_SUPPORT_CHAT_RETENTION_DAYS = int(os.getenv("COURSE_SUPPORT_CHAT_RETENTION_DAYS", "365"))
+COURSE_SUPPORT_CHAT_TICKET_CLEANUP_HOURS = int(os.getenv("COURSE_SUPPORT_CHAT_TICKET_CLEANUP_HOURS", "1"))
+COURSE_SUPPORT_CHAT_WEBSOCKET_URL = os.getenv(
+    "COURSE_SUPPORT_CHAT_WEBSOCKET_URL",
+    "ws://127.0.0.1:8000/ws/course-support/",
+).strip()
+COURSE_SUPPORT_CHAT_ALLOWED_ORIGINS = [
+    value.strip().rstrip("/")
+    for value in os.getenv("COURSE_SUPPORT_CHAT_ALLOWED_ORIGINS", ",".join(CORS_ALLOWED_ORIGINS)).split(",")
+    if value.strip()
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
@@ -92,6 +112,8 @@ REST_FRAMEWORK = {
         "user": "300/min",
         "auth0_exchange": os.getenv("AUTH0_EXCHANGE_THROTTLE_RATE", "10/min"),
         "course_chat": os.getenv("COURSE_CHAT_THROTTLE_RATE", "10/min"),
+        "course_support_send": COURSE_SUPPORT_CHAT_SEND_RATE,
+        "course_support_connection": COURSE_SUPPORT_CHAT_CONNECTION_RATE,
     },
 }
 SIMPLE_JWT = {
@@ -110,6 +132,15 @@ CACHES = {"default": {
     "LOCATION": "tella-default",
 }}
 REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URL],
+            "prefix": "tella-course-support",
+        },
+    },
+}
 
 MATH_TUTOR_API_URL = os.getenv(
     "MATH_TUTOR_API_URL", "https://math-tutor-api-938810058241.europe-west3.run.app"

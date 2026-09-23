@@ -11,6 +11,11 @@ describe("learner proxy allowlist", () => {
     expect(isAllowedLearnerRequest("POST", `activities/${id}/complete`)).toBe(true);
     expect(isAllowedLearnerRequest("POST", `learning-checks/${id}/submit`)).toBe(true);
     expect(isAllowedLearnerRequest("POST", `courses/${id}/chat`)).toBe(true);
+    expect(isAllowedLearnerRequest("GET", `courses/${id}/support-conversation`)).toBe(true);
+    expect(isAllowedLearnerRequest("POST", `courses/${id}/support-conversation`)).toBe(true);
+    expect(isAllowedLearnerRequest("GET", `course-support/conversations/${id}/messages`)).toBe(true);
+    expect(isAllowedLearnerRequest("POST", `course-support/conversations/${id}/read`)).toBe(true);
+    expect(isAllowedLearnerRequest("POST", "course-support/socket-ticket")).toBe(true);
   });
 
   it("does not expose curriculum mutations or arbitrary backend paths", () => {

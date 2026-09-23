@@ -27,6 +27,12 @@ class BackendSurfaceTests(SimpleTestCase):
     def test_auth0_is_disabled_by_default(self):
         self.assertFalse(settings.AUTH0_ENABLED)
 
+    def test_development_uses_an_in_memory_channel_layer(self):
+        self.assertEqual(
+            settings.CHANNEL_LAYERS["default"]["BACKEND"],
+            "channels.layers.InMemoryChannelLayer",
+        )
+
     def test_complete_auth0_configuration_passes_security_checks(self):
         with self.settings(
             AUTH0_ENABLED=True,
