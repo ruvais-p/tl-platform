@@ -48,11 +48,13 @@ The user created by `createsuperuser` can sign in directly to the Next.js staff 
 
 Schedule `python manage.py purge_course_chat` at least daily. It deletes chat sessions, including their messages, whose last activity is older than `COURSE_CHAT_RETENTION_DAYS` (30 by default). Curriculum, enrollment, and progress records are unaffected.
 
+Human course-support chat has a separate retention policy and cleanup command. Schedule `python manage.py purge_course_support_chat` at least daily after confirming `COURSE_SUPPORT_CHAT_RETENTION_DAYS`; use `--dry-run` during rollout. See [the course support operations guide](../docs/COURSE_SUPPORT_CHAT.md) for ASGI, WebSocket, Redis, privacy, log-redaction, rollout, and rollback requirements.
+
 ## Run and test
 
 ```bash
 python manage.py check
-python manage.py runserver 0.0.0.0:8000
+daphne -b 0.0.0.0 -p 8000 config.asgi:application
 pytest
 ```
 
@@ -84,8 +86,8 @@ Normal administrators receive `manage_users` but not `manage_permissions`. The a
 
 ## Redis, Celery, storage, and Moodle
 
-`REDIS_URL` and storage environment variables are reserved now so Redis caching, Celery workers, and S3-compatible storage can be added without changing domain APIs. Moodle authenticates through versioned endpoints and must not implement academic business rules locally.
+`REDIS_URL` backs production caching and the Channels layer used for course-support event delivery across ASGI workers. Redis is transient transport, not message storage; PostgreSQL remains authoritative. Storage environment variables leave room for S3-compatible media. Moodle authenticates through versioned endpoints and must not implement academic business rules locally.
 
 ## Deployment
 
-Use `config.settings.production`, TLS, a production WSGI/ASGI server, managed PostgreSQL, rotated secrets, restricted CORS/hosts, Redis, and object storage. Run migrations and `setup_groups` during controlled deployment. Do not run demo seed commands in production.
+Use `config.settings.production`, TLS, an ASGI server, managed PostgreSQL, rotated secrets, restricted CORS/hosts/socket origins, Redis, and object storage. Run migrations and `setup_groups` during controlled deployment. Keep course support disabled until its `wss://` route and privacy controls pass staging verification. Do not run demo seed commands in production.

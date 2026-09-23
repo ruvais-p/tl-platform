@@ -29,7 +29,16 @@ from students.views import (
 from workshops.views import (
     StaffWorkshopModelViewSet, WorkshopConfigViewSet, WorkshopModelViewSet,
 )
-from tutoring.views import CourseChatView, CourseChatbotConfigViewSet
+from tutoring.views import (
+    CourseChatView,
+    CourseChatbotConfigViewSet,
+    LearnerSupportConversationView,
+    StaffSupportConversationListView,
+    SupportConversationCloseView,
+    SupportConversationMessagesView,
+    SupportConversationReadView,
+    SupportSocketTicketView,
+)
 
 router = DefaultRouter()
 router.register(r"programs", ProgramViewSet, basename="program")
@@ -88,6 +97,12 @@ urlpatterns = [
     path("api/v1/career/applications/<uuid:application_id>/withdraw/", LearnerApplicationWithdrawView.as_view(), name="career-application-withdraw"),
     path("api/v1/career/applications/<uuid:application_id>/resume/", LearnerApplicationResumeView.as_view(), name="career-application-resume"),
     path("api/v1/courses/<uuid:course_id>/chat/", CourseChatView.as_view(), name="course-chat"),
+    path("api/v1/courses/<uuid:course_id>/support-conversation/", LearnerSupportConversationView.as_view(), name="course-support-conversation"),
+    path("api/v1/course-support/conversations/", StaffSupportConversationListView.as_view(), name="course-support-conversations"),
+    path("api/v1/course-support/conversations/<uuid:conversation_id>/messages/", SupportConversationMessagesView.as_view(), name="course-support-messages"),
+    path("api/v1/course-support/conversations/<uuid:conversation_id>/read/", SupportConversationReadView.as_view(), name="course-support-read"),
+    path("api/v1/course-support/conversations/<uuid:conversation_id>/close/", SupportConversationCloseView.as_view(), name="course-support-close"),
+    path("api/v1/course-support/socket-ticket/", SupportSocketTicketView.as_view(), name="course-support-socket-ticket"),
     path("api/v1/health/", lambda request: JsonResponse({"ok": True})),
 ]
 if settings.DEBUG:

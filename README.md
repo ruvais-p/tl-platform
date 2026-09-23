@@ -108,6 +108,8 @@ SSO secret (Moodle plugin setting and Django `MOODLE_SSO_SECRET`) defaults to `t
 
 See `docs/` for API notes, experiment authoring, Moodle installation, and known limitations.
 
+Human course-support chat requires an ASGI deployment and shared Redis in production. Keep it disabled until the WebSocket route, exact origin allowlist, retention, privacy, and log-redaction controls in [the operations guide](docs/COURSE_SUPPORT_CHAT.md) are configured.
+
 ## Staff workspace
 
 The unified Next.js staff app lives in `admin-platform/`. See `admin-platform/README.md` for setup and the role-specific workspace scope.

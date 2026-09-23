@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessagesSquare,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -83,6 +84,15 @@ export const navigation: NavigationItem[] = [
     permissions: ["students.view_studentgroup"],
   },
   {
+    href: "/chats",
+    label: "Chats",
+    icon: MessagesSquare,
+    permissions: [
+      "tutoring.reply_to_assigned_course_support_chats",
+      "tutoring.view_all_course_support_chats",
+    ],
+  },
+  {
     href: "/assessments",
     label: "Assessments",
     icon: ClipboardCheck,
@@ -128,11 +138,12 @@ export function canSee(item: NavigationItem, permissions: string[]) {
   );
 }
 
-function roleName(groups: string[]) {
+export function roleName(groups: string[]) {
   if (groups.includes("SUPER_ADMIN")) return "Super administrator";
   if (groups.includes("ADMIN")) return "Administrator";
   if (groups.includes("ACADEMIC_MANAGER")) return "Academic manager";
   if (groups.includes("CONTENT_MANAGER")) return "Content manager";
+  if (groups.includes("TEACHER")) return "Teacher";
   return "Staff";
 }
 

@@ -21,6 +21,11 @@ describe("staff proxy allowlist", () => {
     expect(isAllowedStaffProxyRequest("GET", "assessment-attempts")).toBe(
       true,
     );
+    expect(isAllowedStaffProxyRequest("GET", "course-support/conversations")).toBe(true);
+    expect(isAllowedStaffProxyRequest("GET", `course-support/conversations/${id}/messages`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", `course-support/conversations/${id}/read`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", `course-support/conversations/${id}/close`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", "course-support/socket-ticket")).toBe(true);
     expect(isAllowedStaffProxyRequest("POST", "career-opportunities")).toBe(
       true,
     );

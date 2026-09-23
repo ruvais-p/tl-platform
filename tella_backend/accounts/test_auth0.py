@@ -171,12 +171,13 @@ class PortalAdmissionTests(TestCase):
         user.groups.add(Group.objects.get(name=group_name))
         return user
 
-    def test_current_staff_groups_are_admitted(self):
+    def test_staff_groups_are_admitted(self):
         for group_name in (
             GroupName.SUPER_ADMIN,
             GroupName.ADMIN,
             GroupName.ACADEMIC_MANAGER,
             GroupName.CONTENT_MANAGER,
+            GroupName.TEACHER,
         ):
             self.assertTrue(portal_admission(self.user_in(group_name), "staff").allowed)
 
@@ -184,12 +185,12 @@ class PortalAdmissionTests(TestCase):
         user = User.objects.create_superuser(email="super-auth0@example.com")
         self.assertTrue(portal_admission(user, "staff").allowed)
 
-    def test_student_and_teacher_keep_current_portal_behavior(self):
+    def test_student_and_teacher_are_admitted_only_to_their_portals(self):
         student = self.user_in(GroupName.STUDENT)
         teacher = self.user_in(GroupName.TEACHER)
         self.assertTrue(portal_admission(student, "learner").allowed)
         self.assertFalse(portal_admission(student, "staff").allowed)
-        self.assertFalse(portal_admission(teacher, "staff").allowed)
+        self.assertTrue(portal_admission(teacher, "staff").allowed)
         self.assertFalse(portal_admission(teacher, "learner").allowed)
 
     def test_inactive_user_is_denied(self):

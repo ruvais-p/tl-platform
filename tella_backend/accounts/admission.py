@@ -8,6 +8,7 @@ STAFF_GROUPS = frozenset({
     GroupName.ADMIN,
     GroupName.ACADEMIC_MANAGER,
     GroupName.CONTENT_MANAGER,
+    GroupName.TEACHER,
 })
 PORTALS = frozenset({"staff", "learner"})
 
