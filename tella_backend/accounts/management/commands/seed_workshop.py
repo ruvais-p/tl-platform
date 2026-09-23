@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 
 from accounts.constants import GroupName
 from accounts.models import User
@@ -174,20 +177,53 @@ class Command(BaseCommand):
         else:
             Enrollment.objects.create(student=student, course=course, course_version=version)
 
-        CareerOpportunity.objects.get_or_create(
+        CareerOpportunity.objects.update_or_create(
             title="Bakery operations internship",
             defaults={
                 "kind": "internship",
+                "legacy_kind": "internship",
+                "company_name": "Tella Foods",
                 "summary": "Apply modelling skills to a live production plan.",
+                "description_markdown": (
+                    "## About the internship\n\nApply optimisation skills to a live "
+                    "production plan with an experienced operations team."
+                ),
+                "employment_type": CareerOpportunity.EmploymentType.INTERNSHIP,
+                "workplace_mode": CareerOpportunity.WorkplaceMode.REMOTE,
+                "remote_region": "India",
+                "compensation_disclosure": CareerOpportunity.CompensationDisclosure.PAID,
+                "compensation_currency": "INR",
+                "compensation_min": 20000,
+                "compensation_max": 30000,
+                "compensation_pay_period": CareerOpportunity.PayPeriod.MONTH,
+                "application_deadline": timezone.now() + timedelta(days=21),
+                "application_mode": CareerOpportunity.ApplicationMode.EXTERNAL,
+                "application_url": "https://example.com/internships",
                 "url": "https://example.com/internships",
+                "lifecycle_status": CareerOpportunity.LifecycleStatus.PUBLISHED,
                 "is_published": True,
             },
         )
-        CareerOpportunity.objects.get_or_create(
+        CareerOpportunity.objects.update_or_create(
             title="Earn-while-you-learn: retail analytics",
             defaults={
                 "kind": "earn_while_learn",
+                "legacy_kind": "earn_while_learn",
+                "company_name": "Northstar Retail",
                 "summary": "Paid project work with partner firms.",
+                "description_markdown": (
+                    "## Project placement\n\nUse course insights to support a retail "
+                    "analytics team."
+                ),
+                "employment_type": CareerOpportunity.EmploymentType.PROJECT,
+                "workplace_mode": CareerOpportunity.WorkplaceMode.HYBRID,
+                "physical_location": "Bengaluru, Karnataka",
+                "compensation_disclosure": CareerOpportunity.CompensationDisclosure.UNPAID,
+                "application_deadline": timezone.now() + timedelta(days=35),
+                "application_mode": CareerOpportunity.ApplicationMode.INTERNAL,
+                "cover_note_required": True,
+                "resume_required": True,
+                "lifecycle_status": CareerOpportunity.LifecycleStatus.PUBLISHED,
                 "is_published": True,
             },
         )

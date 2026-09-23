@@ -43,4 +43,18 @@ describe("staff proxy allowlist", () => {
       isAllowedStaffProxyRequest("GET", "media-assets/------------------------------------"),
     ).toBe(false);
   });
+
+  it("allows only the required opportunity review actions", () => {
+    expect(isAllowedStaffProxyRequest("POST", `career-opportunities/${id}/publish`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", `career-opportunities/${id}/close`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", `career-opportunities/${id}/archive`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("GET", "opportunity-applications")).toBe(true);
+    expect(isAllowedStaffProxyRequest("GET", `opportunity-applications/${id}`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("POST", `opportunity-applications/${id}/transition`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("PATCH", `opportunity-applications/${id}/review_note`)).toBe(true);
+    expect(isAllowedStaffProxyRequest("GET", `opportunity-applications/${id}/resume`)).toBe(true);
+
+    expect(isAllowedStaffProxyRequest("DELETE", `opportunity-applications/${id}`)).toBe(false);
+    expect(isAllowedStaffProxyRequest("POST", `opportunity-applications/${id}/resume`)).toBe(false);
+  });
 });

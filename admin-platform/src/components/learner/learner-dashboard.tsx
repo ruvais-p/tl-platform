@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Award, BookOpen, BriefcaseBusiness, CheckCircle2, Clock3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CompanyLogo, OpportunityBadge, employmentLabels, formatOpportunityLocation } from "@/components/opportunities/opportunity-presentation";
 import {
   Card,
   CardAction,
@@ -34,6 +35,33 @@ function greeting() {
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
+}
+
+export function DashboardOpportunitySummary({ opportunity }: { opportunity?: CareerOpportunity }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Opportunities</CardTitle>
+        <CardDescription>Selected for your learning community.</CardDescription>
+        <CardAction><BriefcaseBusiness className="size-5 text-muted-foreground" aria-hidden="true" /></CardAction>
+      </CardHeader>
+      <CardContent>
+        {opportunity ? (
+          <div className="flex items-start gap-3">
+            <CompanyLogo companyName={opportunity.company_name} src={opportunity.company_logo_url} />
+            <div className="min-w-0"><div className="flex flex-wrap gap-2"><OpportunityBadge>{employmentLabels[opportunity.employment_type]}</OpportunityBadge><OpportunityBadge tone={opportunity.eligibility.eligible ? "success" : "neutral"}>{opportunity.eligibility.eligible ? "Eligible" : "Requirements to meet"}</OpportunityBadge></div><h3 className="mt-2 font-medium">{opportunity.title}</h3><p className="mt-1 text-xs text-muted-foreground">{opportunity.company_name} · {formatOpportunityLocation(opportunity.workplace_mode, opportunity.physical_location, opportunity.remote_region)}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{opportunity.summary}</p></div>
+          </div>
+        ) : (
+          <p className="text-sm leading-6 text-muted-foreground">New internships, projects, and further-learning opportunities will appear here.</p>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button render={<Link href={opportunity ? `/learn/opportunities/${opportunity.id}` : "/learn/opportunities"} />} nativeButton={false} variant="ghost">
+          {opportunity ? "View opportunity" : "Browse opportunities"}<ArrowRight data-icon="inline-end" />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }
 
 export function LearnerDashboard() {
@@ -196,28 +224,7 @@ export function LearnerDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Opportunities</CardTitle>
-                <CardDescription>Published by your institution.</CardDescription>
-                <CardAction><BriefcaseBusiness className="size-5 text-muted-foreground" aria-hidden="true" /></CardAction>
-              </CardHeader>
-              <CardContent>
-                {data.opportunities[0] ? (
-                  <div className="flex flex-col gap-2">
-                    <h3 className="font-medium">{data.opportunities[0].title}</h3>
-                    <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{data.opportunities[0].summary}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm leading-6 text-muted-foreground">New internships, projects, and further-learning opportunities will appear here.</p>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button asChild variant="ghost">
-                  <Link href="/learn/opportunities">Browse opportunities<ArrowRight data-icon="inline-end" /></Link>
-                </Button>
-              </CardFooter>
-            </Card>
+            <DashboardOpportunitySummary opportunity={data.opportunities[0]} />
           </section>
         </>
       )}

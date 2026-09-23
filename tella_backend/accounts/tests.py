@@ -17,6 +17,7 @@ from .models import User
 from .permissions import active_permission_queryset
 from .services import assign_group
 from curriculum.models import Course, LearningActivity
+from progress.models import CareerOpportunity
 from students.models import Enrollment
 
 
@@ -67,6 +68,13 @@ class AuthenticationApiTests(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {login['access']}")
         response = self.client.post(reverse("accounts:logout"), {"refresh": login["refresh"]}, format="json")
         self.assertEqual(response.status_code, 204)
+
+    def test_logout_blacklists_refresh_without_access_credentials(self):
+        login = self.login().data
+        jti = str(RefreshToken(login["refresh"])["jti"])
+        response = self.client.post(reverse("accounts:logout"), {"refresh": login["refresh"]}, format="json")
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(BlacklistedToken.objects.filter(token__jti=jti).exists())
 
     def test_me_returns_groups_and_permissions(self):
         login = self.login().data
@@ -130,6 +138,21 @@ class DemoSeedCommandTests(TestCase):
         self.assertEqual(
             Enrollment.objects.filter(student=student, status=Enrollment.Status.ACTIVE).count(),
             1,
+        )
+        self.assertEqual(CareerOpportunity.objects.count(), 2)
+        self.assertSetEqual(
+            set(CareerOpportunity.objects.values_list("application_mode", flat=True)),
+            {
+                CareerOpportunity.ApplicationMode.INTERNAL,
+                CareerOpportunity.ApplicationMode.EXTERNAL,
+            },
+        )
+        self.assertSetEqual(
+            set(CareerOpportunity.objects.values_list("workplace_mode", flat=True)),
+            {
+                CareerOpportunity.WorkplaceMode.REMOTE,
+                CareerOpportunity.WorkplaceMode.HYBRID,
+            },
         )
 
     def test_content_publisher_attaches_role_owned_data_driven_lessons(self):

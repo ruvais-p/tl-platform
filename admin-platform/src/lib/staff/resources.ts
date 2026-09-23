@@ -1196,42 +1196,6 @@ export const staffResources: Record<string, StaffResourceDefinition> = {
       { key: "created_at", label: "Awarded" },
     ],
   },
-  "career-opportunities": {
-    key: "career-opportunities",
-    section: "operations",
-    title: "Career opportunities",
-    singular: "career opportunity",
-    description:
-      "Create and publish the opportunities shown in the learner career feed.",
-    endpoint: "career-opportunities",
-    viewPermission: "progress.view_careeropportunity",
-    addPermission: "progress.add_careeropportunity",
-    changePermission: "progress.change_careeropportunity",
-    fields: [
-      { key: "title", label: "Title", type: "text", required: true },
-      {
-        key: "kind",
-        label: "Type",
-        type: "text",
-        defaultValue: "internship",
-        required: true,
-      },
-      { key: "summary", label: "Summary", type: "textarea" },
-      { key: "url", label: "URL", type: "text" },
-      {
-        key: "is_published",
-        label: "Published",
-        type: "boolean",
-        defaultValue: false,
-      },
-    ],
-    columns: [
-      { key: "title", label: "Title" },
-      { key: "kind", label: "Type" },
-      { key: "is_published", label: "Published" },
-      { key: "updated_at", label: "Updated" },
-    ],
-  },
   "legacy-assessment-attempts": {
     key: "legacy-assessment-attempts",
     section: "operations",

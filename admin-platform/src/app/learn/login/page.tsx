@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LearnerLoginForm } from "@/components/learner/learner-login-form";
+import { auth0Enabled } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Student sign in" };
 
@@ -13,7 +14,7 @@ export default function LearnerLoginPage() {
         </div>
       }
     >
-      <LearnerLoginForm />
+      <LearnerLoginForm auth0Available={auth0Enabled()} />
     </Suspense>
   );
 }

@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   FileStack,
   FolderOpen,
+  BriefcaseBusiness,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -40,7 +41,14 @@ type DashboardModule = {
   permissions: string[];
 };
 
-const modules: DashboardModule[] = [
+export const modules: DashboardModule[] = [
+  {
+    title: "Opportunities",
+    description: "Publish structured roles and review internal applicants.",
+    href: "/opportunities",
+    icon: BriefcaseBusiness,
+    permissions: ["progress.view_careeropportunity"],
+  },
   {
     title: "Curriculum",
     description:

@@ -1,13 +1,17 @@
 from django.contrib.auth.base_user import BaseUserManager
 
 
+def normalize_email_address(email: str) -> str:
+    return BaseUserManager.normalize_email(str(email or "").strip()).lower()
+
+
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def _create_user(self, email: str, password: str | None, **extra_fields):
         if not email:
             raise ValueError("Email is required")
-        email = self.normalize_email(email).lower()
+        email = normalize_email_address(email)
         if not extra_fields.get("username"):
             base = email.split("@", 1)[0][:140] or "user"
             username = base

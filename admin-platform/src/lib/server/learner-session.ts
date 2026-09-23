@@ -5,6 +5,7 @@ import { getApiBaseUrl, secureCookies } from "@/lib/env";
 
 const ACCESS_COOKIE = "tella_learner_access";
 const REFRESH_COOKIE = "tella_learner_refresh";
+const AUTH_METHOD_COOKIE = "tella_learner_auth_method";
 const cookieOptions = () => ({
   httpOnly: true,
   secure: secureCookies(),
@@ -14,17 +15,20 @@ const cookieOptions = () => ({
 });
 
 export type LearnerTokenPair = { access: string; refresh: string };
+export type LearnerAuthMethod = "password" | "auth0" | "moodle";
 
-export async function setLearnerSession(tokens: LearnerTokenPair) {
+export async function setLearnerSession(tokens: LearnerTokenPair, authMethod: LearnerAuthMethod = "password") {
   const store = await cookies();
   store.set(ACCESS_COOKIE, tokens.access, { ...cookieOptions(), maxAge: 15 * 60 });
   store.set(REFRESH_COOKIE, tokens.refresh, { ...cookieOptions(), maxAge: 7 * 24 * 60 * 60 });
+  store.set(AUTH_METHOD_COOKIE, authMethod, { ...cookieOptions(), maxAge: 7 * 24 * 60 * 60 });
 }
 
 export async function clearLearnerSession() {
   const store = await cookies();
   store.delete(ACCESS_COOKIE);
   store.delete(REFRESH_COOKIE);
+  store.delete(AUTH_METHOD_COOKIE);
 }
 
 async function refreshLearnerSession() {
@@ -43,7 +47,8 @@ async function refreshLearnerSession() {
   }
   const tokens = await response.json() as { access: string; refresh?: string };
   const pair = { access: tokens.access, refresh: tokens.refresh || refresh };
-  await setLearnerSession(pair);
+  const authMethod = await learnerAuthMethod();
+  await setLearnerSession(pair, authMethod);
   return pair.access;
 }
 
@@ -69,4 +74,9 @@ export async function learnerDjangoRequest(path: string, init: RequestInit = {},
 
 export async function learnerRefreshToken() {
   return (await cookies()).get(REFRESH_COOKIE)?.value;
+}
+
+export async function learnerAuthMethod(): Promise<LearnerAuthMethod> {
+  const method = (await cookies()).get(AUTH_METHOD_COOKIE)?.value;
+  return method === "auth0" || method === "moodle" ? method : "password";
 }

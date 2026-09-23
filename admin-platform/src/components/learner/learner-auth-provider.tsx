@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LearnerApiError, learnerAuthApi } from "@/lib/learner/api";
 import type { User } from "@/lib/learner/types";
+import { navigateAfterLogout } from "@/lib/auth/logout-navigation";
 
 type LearnerAuthValue = {
   user: User | null;
@@ -37,9 +38,9 @@ export function LearnerAuthProvider({ children }: { children: React.ReactNode })
   }, [pathname, router]);
 
   async function logout() {
-    await learnerAuthApi.logout();
+    const result = await learnerAuthApi.logout();
     setUser(null);
-    router.replace("/learn/login");
+    navigateAfterLogout(result, router.replace);
   }
 
   return <LearnerAuthContext.Provider value={{ user, loading, logout }}>{children}</LearnerAuthContext.Provider>;

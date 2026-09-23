@@ -10,11 +10,11 @@ from curriculum.views import (
 )
 from content.views import ActivityContentViewSet, ExperimentViewSet, PracticeItemViewSet, PracticeSetViewSet, VideoViewSet
 from media_library.views import MediaAssetViewSet
-from progress.views import ActivityProgressActionView, CareerOpportunityListView, GamificationMeView, ProgressUpsertView
+from progress.views import ActivityProgressActionView, CareerOpportunityApplicationCreateView, CareerOpportunityDetailView, CareerOpportunityListView, GamificationMeView, LearnerApplicationListView, LearnerApplicationResumeView, LearnerApplicationWithdrawView, ProgressUpsertView
 from progress.views import (
     ActivityProgressStaffViewSet, BadgeAwardStaffViewSet,
     CareerOpportunityStaffViewSet, LegacyAssessmentAttemptStaffViewSet,
-    PointEventStaffViewSet,
+    OpportunityApplicationStaffViewSet, PointEventStaffViewSet,
 )
 from progress.progress_views import MyActivityProgressListView, MyActivityProgressView, MyChapterProgressView, MyCourseProgressView, MyProgressView
 from assessments.views import (
@@ -64,6 +64,7 @@ router.register(r"assessment-answers", AssessmentAnswerStaffViewSet, basename="a
 router.register(r"point-events", PointEventStaffViewSet, basename="point-event")
 router.register(r"badge-awards", BadgeAwardStaffViewSet, basename="badge-award")
 router.register(r"career-opportunities", CareerOpportunityStaffViewSet, basename="career-opportunity")
+router.register(r"opportunity-applications", OpportunityApplicationStaffViewSet, basename="opportunity-application")
 router.register(r"legacy-assessment-attempts", LegacyAssessmentAttemptStaffViewSet, basename="legacy-assessment-attempt")
 router.register(r"workshop-configs", WorkshopConfigViewSet, basename="workshop-config")
 router.register(r"staff-workshop-models", StaffWorkshopModelViewSet, basename="staff-workshop-model")
@@ -81,6 +82,11 @@ urlpatterns = [
     path("api/v1/me/activities/<uuid:activity_id>/progress/", MyActivityProgressView.as_view(), name="my_activity_progress"),
     path("api/v1/gamification/me/", GamificationMeView.as_view(), name="gamification_me"),
     path("api/v1/career/opportunities/", CareerOpportunityListView.as_view(), name="career"),
+    path("api/v1/career/opportunities/<uuid:opportunity_id>/", CareerOpportunityDetailView.as_view(), name="career-detail"),
+    path("api/v1/career/opportunities/<uuid:opportunity_id>/applications/", CareerOpportunityApplicationCreateView.as_view(), name="career-apply"),
+    path("api/v1/career/applications/me/", LearnerApplicationListView.as_view(), name="career-applications-me"),
+    path("api/v1/career/applications/<uuid:application_id>/withdraw/", LearnerApplicationWithdrawView.as_view(), name="career-application-withdraw"),
+    path("api/v1/career/applications/<uuid:application_id>/resume/", LearnerApplicationResumeView.as_view(), name="career-application-resume"),
     path("api/v1/courses/<uuid:course_id>/chat/", CourseChatView.as_view(), name="course-chat"),
     path("api/v1/health/", lambda request: JsonResponse({"ok": True})),
 ]

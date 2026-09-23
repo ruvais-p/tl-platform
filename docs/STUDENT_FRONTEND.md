@@ -2,6 +2,8 @@
 
 The student experience is part of the existing Next.js app and starts at `http://localhost:3000/learn/login`. It does not require a Moodle clone for frontend development.
 
+The login page can offer both local email/password and Auth0 Universal Login. Auth0 setup, pre-provisioning, and verified-email linking are documented in [Auth0 setup](AUTH0.md).
+
 ## Screens
 
 - `/learn` — live dashboard, progress, achievements, and continuation target
